@@ -67,7 +67,6 @@ func main() {
 	}
 	//创建TCP客户端去连接broker
 	addrStr := fmt.Sprintf("%s:%d", logic.GConf.BrokerIp, logic.GConf.BrokerPort)
-
 	brokerConnector := logic.CreateConnect()
 
 	//协程1：对客户端提供服务
@@ -79,6 +78,7 @@ func main() {
 	for {
 		if err = brokerConnector.ConnectToBroker(addrStr);err != nil {
 			time.Sleep(10 * time.Second)
+			continue
 		}
 		//连接已建立
 		//创建2个协程

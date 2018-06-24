@@ -40,7 +40,7 @@ func (c *Connection) ConnectToBroker(addrStr string) error {
 	log.Printf("connecting to broker %s\n", addrStr)
 	conn, err := net.DialTCP("tcp", nil, tcpAddr)
 	if err != nil {
-		log.Fatalf("can's connect tcp address %s\n", addrStr)
+		log.Printf("can's connect tcp address %s\n", addrStr)
 		return err
 	}
 	log.Printf("connected to broker %s\n", addrStr)
