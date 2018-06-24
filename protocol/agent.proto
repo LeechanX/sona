@@ -1,0 +1,38 @@
+package protocol;
+
+enum MsgTypeId {
+    GetConfigReqId = 1;//client向agent索取配置
+    GetConfigRspId = 2;//broker把配置信息回复给agent
+    PushConfigReqId = 3;//broker将配置推送给agent
+    RemoveConfigReqId = 4;//broker将删除配合命令发送给agent
+    PullConfigReqId = 5;//agent向broker拉取最新配置，同时充当心跳
+    PullConfigRspId = 6;//broker回应agent的拉取请求
+}
+
+message GetConfigReq {
+    required string key = 1;
+}
+
+message GetConfigRsp {
+    required string key   = 1;
+    required string value = 2;
+}
+
+message PushConfigReq {
+    required string key   = 1;
+    required string value = 2;
+}
+
+message RemoveConfigReq {
+    required string key = 1;
+}
+
+message PullConfigReq {
+    repeated string keys = 1;
+    repeated string values = 2;
+}
+
+message PullConfigRsp {
+    repeated string keys   = 1;
+    repeated string values = 2;
+}
