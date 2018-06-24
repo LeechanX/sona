@@ -2,18 +2,21 @@ package logic
 
 import (
 	"log"
-	"net"
 	"easyconfig/core"
 	"easyconfig/protocol"
 	"github.com/golang/protobuf/proto"
 )
 
-func ReceiveFromBroker(controller *core.ConfigController, tcpConn *net.TCPConn) {
+func ReceiveFromBroker(controller *core.ConfigController, c *Connection) {
+	defer c.Wg.Done()
 	for {
-		cmdId, pbData, err := protocol.DecodeTCPMessage(tcpConn)
+		cmdId, pbData, err := protocol.DecodeTCPMessage(c.conn)
 		if err != nil {
 			log.Panicf("%s\n", err)
-			//TODO: TCP错误处理
+			//可能是网络出错，于是调用CloseConnect会主动关闭连接
+			//也可能是其他G关闭了连接，这时调用CloseConnect将什么也不干
+			c.CloseConnect()
+			return
 		}
 		//收到来自broker的回复
 		if cmdId == protocol.MsgTypeId_PullConfigRspId {
@@ -21,7 +24,10 @@ func ReceiveFromBroker(controller *core.ConfigController, tcpConn *net.TCPConn) 
 			err = proto.Unmarshal(pbData, &pullConfigRsp)
 			if err != nil {
 				log.Panicf("receive from broker data format error: %s\n", err)
-				continue
+				//可能是网络出错，于是调用CloseConnect会主动关闭连接
+				//也可能是其他G关闭了连接，这时调用CloseConnect将什么也不干
+				c.CloseConnect()
+				return
 			}
 
 			if len(pullConfigRsp.Keys) != len(pullConfigRsp.Values) {
@@ -35,7 +41,10 @@ func ReceiveFromBroker(controller *core.ConfigController, tcpConn *net.TCPConn) 
 				err = controller.Set(key, value)
 				if err != nil {
 					log.Panicf("receive from broker data format error: %s\n", err)
-					continue
+					//可能是网络出错，于是调用CloseConnect会主动关闭连接
+					//也可能是其他G关闭了连接，这时调用CloseConnect将什么也不干
+					c.CloseConnect()
+					return
 				}
 			}
 		} else if cmdId == protocol.MsgTypeId_PushConfigReqId {
@@ -44,7 +53,10 @@ func ReceiveFromBroker(controller *core.ConfigController, tcpConn *net.TCPConn) 
 			err = proto.Unmarshal(pbData, &pushConfigRsp)
 			if err != nil {
 				log.Panicf("receive from broker data format error: %s\n", err)
-				continue
+				//可能是网络出错，于是调用CloseConnect会主动关闭连接
+				//也可能是其他G关闭了连接，这时调用CloseConnect将什么也不干
+				c.CloseConnect()
+				return
 			}
 			//更新配置
 			key := *pushConfigRsp.Key
@@ -52,7 +64,7 @@ func ReceiveFromBroker(controller *core.ConfigController, tcpConn *net.TCPConn) 
 			value := *pushConfigRsp.Value
 			err = controller.Set(key, value)
 			if err != nil {
-				log.Panicf("Receiver Routine: receive from broker data format error: %s\n", err)
+				log.Panicf("Set configure meet error: %s\n", err)
 			}
 		} else if cmdId == protocol.MsgTypeId_RemoveConfigReqId {
 			//broker要求删除配置
@@ -60,7 +72,10 @@ func ReceiveFromBroker(controller *core.ConfigController, tcpConn *net.TCPConn) 
 			err = proto.Unmarshal(pbData, &removeConfigReq)
 			if err != nil {
 				log.Panicf("receive from broker data format error: %s\n", err)
-				continue
+				//可能是网络出错，于是调用CloseConnect会主动关闭连接
+				//也可能是其他G关闭了连接，这时调用CloseConnect将什么也不干
+				c.CloseConnect()
+				return
 			}
 			//删除配置
 			key := *removeConfigReq.Key

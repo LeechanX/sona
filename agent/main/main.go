@@ -6,12 +6,11 @@ import (
 	"net"
 	"fmt"
 	"flag"
-	"easyconfig/common"
+	"time"
 	"easyconfig/core"
-	"easyconfig/protocol"
+	"easyconfig/common"
 	"easyconfig/agent/logic"
 	"github.com/larspensjo/config"
-	"time"
 )
 
 func loadSelfConfig() {
@@ -38,6 +37,16 @@ func loadSelfConfig() {
 		log.Panicf("configure broker-port format error: %s\n", err)
 		os.Exit(1)
 	}
+
+	if !cfg.HasSection("agent") {
+		log.Panicln("configure has no section: agent")
+		os.Exit(1)
+	}
+	logic.GConf.AgentPort, err = cfg.Int("agent", "port")
+	if err != nil {
+		log.Panicf("configure agent-port format error: %s\n", err)
+		os.Exit(1)
+	}
 }
 
 func main() {
@@ -51,34 +60,37 @@ func main() {
 	defer controller.Close()
 
 	//创建UDP服务于client
-	udpAddr, err := net.ResolveUDPAddr("udp", "127.0.0.1:9901")
+	udpAddr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("127.0.0.1:%d", logic.GConf.AgentPort))
 	if err != nil {
 		log.Fatalf("can's resolve udp address 127.0.0.1:9901\n")
 		os.Exit(1)
 	}
 	//创建TCP客户端去连接broker
 	addrStr := fmt.Sprintf("%s:%d", logic.GConf.BrokerIp, logic.GConf.BrokerPort)
-	tcpAddr, _ := net.ResolveTCPAddr("tcp", addrStr)
-	log.Printf("connecting to broker %s\n", addrStr)
-	tcpConn, err := net.DialTCP("tcp", nil, tcpAddr)
-	if err != nil {
-		log.Fatalf("can's connect tcp address %s\n", addrStr)
-		os.Exit(1)
+
+	brokerConnector := logic.CreateConnect()
+
+	//协程1：对客户端提供服务
+	go logic.ClientService(udpAddr, brokerConnector)
+
+	//协程2：周期性更新配置
+	go logic.PeriodicPull(controller, brokerConnector)
+
+	for {
+		if err = brokerConnector.ConnectToBroker(addrStr);err != nil {
+			time.Sleep(10 * time.Second)
+		}
+		//连接已建立
+		//创建2个协程
+		//协程3：向broker拉取配置
+		brokerConnector.Wg.Add(1)
+		go logic.PullFromBroker(brokerConnector)
+
+		//协程4：接收来自broker的消息
+		brokerConnector.Wg.Add(1)
+		go logic.ReceiveFromBroker(controller, brokerConnector)
+
+		//等待到2个协程终止，说明网络出了问题
+		brokerConnector.Wg.Wait()
 	}
-	log.Printf("connected to broker %s\n", addrStr)
-
-	ch := make(chan protocol.PullConfigReq, 1000)
-	//routine: 向broker拉取最新配置
-	go logic.PullFromBroker(ch, tcpConn)
-	//routine: 接收来自broker的最新配置
-	go logic.ReceiveFromBroker(controller, tcpConn)
-	//routine: 周期性更新bucket信息
-	go logic.PeriodicPull(controller, ch)
-	//主goroutine负责服务于客户端
-
-	time.Sleep(time.Second * 3)
-	tcpConn.Close()
-
-	time.Sleep(time.Second * 3000)
-	logic.ClientService(udpAddr, ch)
 }
