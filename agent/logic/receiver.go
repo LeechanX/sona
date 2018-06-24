@@ -10,19 +10,10 @@ import (
 
 func ReceiveFromBroker(controller *core.ConfigController, tcpConn *net.TCPConn) {
 	for {
-		data := make([]byte, 1024)
-		nBytes, err := tcpConn.Read(data)
+		cmdId, pbData, err := protocol.DecodeTCPMessage(tcpConn)
 		if err != nil {
-			//TODO
-			log.Panicf("tcp receive error: %s\n", err)
-		}
-		if nBytes <= 8 {
-			log.Panicf("receive from broker length error: %d\n", nBytes)
-			continue
-		}
-		cmdId, pbData, err := protocol.DecodeMessage(data[:nBytes])
-		if err != nil {
-			//TODO
+			log.Panicf("%s\n", err)
+			//TODO: TCP错误处理
 		}
 		//收到来自broker的回复
 		if cmdId == protocol.MsgTypeId_PullConfigRspId {

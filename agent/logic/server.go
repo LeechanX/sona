@@ -17,19 +17,9 @@ func ClientService(udpAddr *net.UDPAddr, ch chan<- protocol.PullConfigReq) {
 	defer conn.Close()
 
 	for {
-		data := make([]byte, 1024)
-		nBytes, _, err := conn.ReadFromUDP(data)
+		cmdId, pbData, err := protocol.DecodeUDPMessage(conn)
 		if err != nil {
-			log.Panicf("receive from udp: %s\n", err)
-			continue
-		}
-
-		if nBytes <= 8 {
-			log.Panicf("receive from udp length error: %d\n", nBytes)
-			continue
-		}
-		cmdId, pbData, err := protocol.DecodeMessage(data[:nBytes])
-		if err != nil {
+			log.Panicf("%s\n", err)
 			continue
 		}
 
