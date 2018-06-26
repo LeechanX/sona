@@ -4,9 +4,9 @@ import (
 	"os"
 	"log"
 	"net"
+	"sync/atomic"
 	"easyconfig/protocol"
 	"github.com/golang/protobuf/proto"
-	"sync/atomic"
 )
 
 func ClientService(udpAddr *net.UDPAddr, c *Connection) {
@@ -38,10 +38,10 @@ func ClientService(udpAddr *net.UDPAddr, c *Connection) {
 			pullConfigReq := protocol.PullConfigReq{}
 			pullConfigReq.Keys = []string{key}
 			//发送给拉取goroutine
-			if atomic.LoadUint32(&c.status) == CONNECTED {
+			if atomic.LoadInt32(&c.status) == kConnStatusDisconnected {
 				//确认与broker建立连接才发送
 				log.Println("Client Service Routine: try to send request to puller goroutine")
-				c.sendQueue<- pullConfigReq
+				c.sendQueue<- &pullConfigReq
 				log.Println("Client Service Routine: send request to puller goroutine ok")
 			}
 		}

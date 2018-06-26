@@ -8,14 +8,16 @@ import (
 )
 
 func ReceiveFromBroker(controller *core.ConfigController, c *Connection) {
-	defer c.Wg.Done()
+	defer func() {
+		//可能是网络出错，于是调用CloseConnect会主动关闭连接
+		//也可能是其他G关闭了连接，这时调用Close将什么也不干
+		c.CloseConnect()
+		c.Wg.Done()
+	}()
 	for {
 		cmdId, pbData, err := protocol.DecodeTCPMessage(c.conn)
 		if err != nil {
-			log.Panicf("%s\n", err)
-			//可能是网络出错，于是调用CloseConnect会主动关闭连接
-			//也可能是其他G关闭了连接，这时调用CloseConnect将什么也不干
-			c.CloseConnect()
+			log.Printf("%s\n", err)
 			return
 		}
 		//收到来自broker的回复
@@ -23,10 +25,7 @@ func ReceiveFromBroker(controller *core.ConfigController, c *Connection) {
 			pullConfigRsp := protocol.PullConfigRsp{}
 			err = proto.Unmarshal(pbData, &pullConfigRsp)
 			if err != nil {
-				log.Panicf("receive from broker data format error: %s\n", err)
-				//可能是网络出错，于是调用CloseConnect会主动关闭连接
-				//也可能是其他G关闭了连接，这时调用CloseConnect将什么也不干
-				c.CloseConnect()
+				log.Printf("receive from broker data format error: %s\n", err)
 				return
 			}
 
@@ -38,13 +37,14 @@ func ReceiveFromBroker(controller *core.ConfigController, c *Connection) {
 				key := pullConfigRsp.Keys[idx]
 				log.Printf("get updated configure %s\n", key)
 				value := pullConfigRsp.Values[idx]
-				err = controller.Set(key, value)
-				if err != nil {
-					log.Panicf("receive from broker data format error: %s\n", err)
-					//可能是网络出错，于是调用CloseConnect会主动关闭连接
-					//也可能是其他G关闭了连接，这时调用CloseConnect将什么也不干
-					c.CloseConnect()
-					return
+				if value != "" {
+					//说明是修改
+					if err = controller.Set(key, value);err != nil {
+						log.Panicf("%s\n", err)
+					}
+				} else {
+					//说明需要删除
+					controller.Remove(key)
 				}
 			}
 		} else if cmdId == protocol.MsgTypeId_PushConfigReqId {
@@ -52,18 +52,14 @@ func ReceiveFromBroker(controller *core.ConfigController, c *Connection) {
 			pushConfigRsp := protocol.PushConfigReq{}
 			err = proto.Unmarshal(pbData, &pushConfigRsp)
 			if err != nil {
-				log.Panicf("receive from broker data format error: %s\n", err)
-				//可能是网络出错，于是调用CloseConnect会主动关闭连接
-				//也可能是其他G关闭了连接，这时调用CloseConnect将什么也不干
-				c.CloseConnect()
+				log.Printf("receive from broker data format error: %s\n", err)
 				return
 			}
 			//更新配置
 			key := *pushConfigRsp.Key
 			log.Printf("Receiver Routine: get updated configure %s\n", key)
 			value := *pushConfigRsp.Value
-			err = controller.Set(key, value)
-			if err != nil {
+			if err = controller.Set(key, value);err != nil {
 				log.Panicf("Set configure meet error: %s\n", err)
 			}
 		} else if cmdId == protocol.MsgTypeId_RemoveConfigReqId {
@@ -71,16 +67,15 @@ func ReceiveFromBroker(controller *core.ConfigController, c *Connection) {
 			removeConfigReq := protocol.RemoveConfigReq{}
 			err = proto.Unmarshal(pbData, &removeConfigReq)
 			if err != nil {
-				log.Panicf("receive from broker data format error: %s\n", err)
-				//可能是网络出错，于是调用CloseConnect会主动关闭连接
-				//也可能是其他G关闭了连接，这时调用CloseConnect将什么也不干
-				c.CloseConnect()
+				log.Printf("receive from broker data format error: %s\n", err)
 				return
 			}
 			//删除配置
 			key := *removeConfigReq.Key
 			log.Printf("Receiver Routine: get deleted configure %s\n", key)
 			controller.Remove(key)
+		} else {
+			log.Printf("unknown request cmd id: %d\n", cmdId)
 		}
 	}
 }

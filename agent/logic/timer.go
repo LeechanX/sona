@@ -19,8 +19,8 @@ func PeriodicPull(controller *core.ConfigController, c *Connection) {
 					pullConfigReq.Keys = append(pullConfigReq.Keys, key)
 					pullConfigReq.Values = append(pullConfigReq.Values, value)
 				}
-				if atomic.LoadUint32(&c.status) == CONNECTED {
-					c.sendQueue<- pullConfigReq
+				if atomic.LoadInt32(&c.status) == kConnStatusConnected {
+					c.sendQueue<- &pullConfigReq
 				} else {
 					//连接已经断开，则不发送
 					//DO NOTHING

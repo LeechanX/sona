@@ -10,30 +10,29 @@ import (
 )
 
 const (
-	CONNECTED = iota
-	DISCONNECTED
+	kConnStatusConnected = iota
+	kConnStatusDisconnected
 )
 
 type Connection struct {
 	conn *net.TCPConn
-	status uint32
+	status int32
 	Wg sync.WaitGroup
-	sendQueue chan protocol.PullConfigReq
-	mutex sync.Mutex//用于保护CloseConnect操作，防止同时多个G进行CloseConnect
+	sendQueue chan *protocol.PullConfigReq
 }
 
 //创建一个connect结构体
 func CreateConnect() *Connection {
 	return &Connection{
 		conn:nil,
-		status:DISCONNECTED,
-		sendQueue:nil,
+		status:kConnStatusDisconnected,
+		sendQueue:make(chan *protocol.PullConfigReq, 1000),
 	}
 }
 
 //执行连接
 func (c *Connection) ConnectToBroker(addrStr string) error {
-	if atomic.LoadUint32(&c.status) == CONNECTED {
+	if atomic.LoadInt32(&c.status) == kConnStatusConnected {
 		return errors.New("already connected with broker")
 	}
 	tcpAddr, _ := net.ResolveTCPAddr("tcp", addrStr)
@@ -46,24 +45,19 @@ func (c *Connection) ConnectToBroker(addrStr string) error {
 	log.Printf("connected to broker %s\n", addrStr)
 	c.conn = conn
 	//设置状态为已连接
-	c.sendQueue = make(chan protocol.PullConfigReq, 1000)
-	atomic.StoreUint32(&c.status, CONNECTED)
+	atomic.StoreInt32(&c.status, kConnStatusConnected)
 	return nil
 }
 
 //关闭连接
 func (c *Connection) CloseConnect() {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-	if atomic.LoadUint32(&c.status) == DISCONNECTED {
+	if !atomic.CompareAndSwapInt32(&c.status, kConnStatusConnected, kConnStatusDisconnected) {
 		log.Println("already closed the connection with broker")
 		return
 	}
 	log.Println("now close the connection with broker")
-	//设置连接已关闭
-	atomic.StoreUint32(&c.status, DISCONNECTED)
-	//关闭管道
-	close(c.sendQueue)
+	//防止panic，不关闭管道，而是发送消息nil告知已无消息
+	c.sendQueue<- nil
 	//关闭连接
 	c.conn.Close()
 }
