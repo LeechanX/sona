@@ -6,6 +6,10 @@ enum MsgTypeId {
     PullConfigReqId = 3;//agent向broker拉取最新配置，同时充当心跳
     PullConfigRspId = 4;//broker回应agent的拉取请求
     PushConfigReqId = 5;//broker将配置推送给agent
+    AddNewConfigReqId = 6;//manager向broker发新增配置操作
+    UpdateConfigReqId = 7;//manager向broker发修改配置操作
+    DeleteConfigReqId = 8;//manager向broker发删除配置操作
+    ManageConfigRspId = 9;//broker向manager对操作结果的回报
 }
 
 message GetConfigReq {
@@ -34,4 +38,25 @@ message PullConfigReq {
 message PullConfigRsp {
     repeated string keys   = 1;
     repeated string values = 2;
+}
+
+message AddNewConfigReq {
+    required string key = 1;
+    required string value = 2;    
+}
+
+message UpdateConfigReq {
+    required string key = 1;
+    required string oldValue = 2;
+    required string newValue = 3;
+}
+
+message DeleteConfigReq {
+    required string key = 1;
+    required string oldValue = 2;
+}
+
+message ManageConfigRsp {
+    required int32 retcode = 1;
+    optional string errmsg = 2;
 }
