@@ -1,0 +1,36 @@
+package logic
+
+import (
+	"os"
+	"net"
+	"log"
+	"fmt"
+	"sync/atomic"
+)
+
+//现有连接个数
+var numberOfConnections int32
+
+func BrokerService() {
+	tcpAddr, _ := net.ResolveTCPAddr("tcp4", fmt.Sprintf("0.0.0.0:%d", GConf.BrokerPort))
+	listen, err := net.ListenTCP("tcp", tcpAddr)
+	if err != nil {
+		log.Fatalf("%s\n", err)
+		os.Exit(1)
+	}
+	defer listen.Close()
+
+	for {
+		conn, err := listen.AcceptTCP()
+		if err != nil {
+			log.Printf("%s\n", err)
+			os.Exit(1)
+		}
+		//处理请求
+		if atomic.LoadInt32(&numberOfConnections) < int32(GConf.ConnectionLimit) {
+			CreateConnection(conn)
+		} else {
+			log.Println("connections is too much now")
+		}
+	}
+}

@@ -22,28 +22,25 @@ type MsgTypeId int32
 
 const (
 	MsgTypeId_GetConfigReqId    MsgTypeId = 1
-	MsgTypeId_GetConfigRspId    MsgTypeId = 2
-	MsgTypeId_PushConfigReqId   MsgTypeId = 3
-	MsgTypeId_RemoveConfigReqId MsgTypeId = 4
-	MsgTypeId_PullConfigReqId   MsgTypeId = 5
-	MsgTypeId_PullConfigRspId   MsgTypeId = 6
+	MsgTypeId_RemoveConfigReqId MsgTypeId = 2
+	MsgTypeId_PullConfigReqId   MsgTypeId = 3
+	MsgTypeId_PullConfigRspId   MsgTypeId = 4
+	MsgTypeId_PushConfigReqId   MsgTypeId = 5
 )
 
 var MsgTypeId_name = map[int32]string{
 	1: "GetConfigReqId",
-	2: "GetConfigRspId",
-	3: "PushConfigReqId",
-	4: "RemoveConfigReqId",
-	5: "PullConfigReqId",
-	6: "PullConfigRspId",
+	2: "RemoveConfigReqId",
+	3: "PullConfigReqId",
+	4: "PullConfigRspId",
+	5: "PushConfigReqId",
 }
 var MsgTypeId_value = map[string]int32{
 	"GetConfigReqId":    1,
-	"GetConfigRspId":    2,
-	"PushConfigReqId":   3,
-	"RemoveConfigReqId": 4,
-	"PullConfigReqId":   5,
-	"PullConfigRspId":   6,
+	"RemoveConfigReqId": 2,
+	"PullConfigReqId":   3,
+	"PullConfigRspId":   4,
+	"PushConfigReqId":   5,
 }
 
 func (x MsgTypeId) Enum() *MsgTypeId {
@@ -63,7 +60,7 @@ func (x *MsgTypeId) UnmarshalJSON(data []byte) error {
 	return nil
 }
 func (MsgTypeId) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_agent_b17cea0a41fc57a0, []int{0}
+	return fileDescriptor_agent_27c18e788072c0f3, []int{0}
 }
 
 type GetConfigReq struct {
@@ -77,7 +74,7 @@ func (m *GetConfigReq) Reset()         { *m = GetConfigReq{} }
 func (m *GetConfigReq) String() string { return proto.CompactTextString(m) }
 func (*GetConfigReq) ProtoMessage()    {}
 func (*GetConfigReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_b17cea0a41fc57a0, []int{0}
+	return fileDescriptor_agent_27c18e788072c0f3, []int{0}
 }
 func (m *GetConfigReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GetConfigReq.Unmarshal(m, b)
@@ -116,7 +113,7 @@ func (m *GetConfigRsp) Reset()         { *m = GetConfigRsp{} }
 func (m *GetConfigRsp) String() string { return proto.CompactTextString(m) }
 func (*GetConfigRsp) ProtoMessage()    {}
 func (*GetConfigRsp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_b17cea0a41fc57a0, []int{1}
+	return fileDescriptor_agent_27c18e788072c0f3, []int{1}
 }
 func (m *GetConfigRsp) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GetConfigRsp.Unmarshal(m, b)
@@ -162,7 +159,7 @@ func (m *PushConfigReq) Reset()         { *m = PushConfigReq{} }
 func (m *PushConfigReq) String() string { return proto.CompactTextString(m) }
 func (*PushConfigReq) ProtoMessage()    {}
 func (*PushConfigReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_b17cea0a41fc57a0, []int{2}
+	return fileDescriptor_agent_27c18e788072c0f3, []int{2}
 }
 func (m *PushConfigReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PushConfigReq.Unmarshal(m, b)
@@ -207,7 +204,7 @@ func (m *RemoveConfigReq) Reset()         { *m = RemoveConfigReq{} }
 func (m *RemoveConfigReq) String() string { return proto.CompactTextString(m) }
 func (*RemoveConfigReq) ProtoMessage()    {}
 func (*RemoveConfigReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_b17cea0a41fc57a0, []int{3}
+	return fileDescriptor_agent_27c18e788072c0f3, []int{3}
 }
 func (m *RemoveConfigReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RemoveConfigReq.Unmarshal(m, b)
@@ -246,7 +243,7 @@ func (m *PullConfigReq) Reset()         { *m = PullConfigReq{} }
 func (m *PullConfigReq) String() string { return proto.CompactTextString(m) }
 func (*PullConfigReq) ProtoMessage()    {}
 func (*PullConfigReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_b17cea0a41fc57a0, []int{4}
+	return fileDescriptor_agent_27c18e788072c0f3, []int{4}
 }
 func (m *PullConfigReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PullConfigReq.Unmarshal(m, b)
@@ -292,7 +289,7 @@ func (m *PullConfigRsp) Reset()         { *m = PullConfigRsp{} }
 func (m *PullConfigRsp) String() string { return proto.CompactTextString(m) }
 func (*PullConfigRsp) ProtoMessage()    {}
 func (*PullConfigRsp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_b17cea0a41fc57a0, []int{5}
+	return fileDescriptor_agent_27c18e788072c0f3, []int{5}
 }
 func (m *PullConfigRsp) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PullConfigRsp.Unmarshal(m, b)
@@ -336,10 +333,10 @@ func init() {
 	proto.RegisterEnum("protocol.MsgTypeId", MsgTypeId_name, MsgTypeId_value)
 }
 
-func init() { proto.RegisterFile("agent.proto", fileDescriptor_agent_b17cea0a41fc57a0) }
+func init() { proto.RegisterFile("agent.proto", fileDescriptor_agent_27c18e788072c0f3) }
 
-var fileDescriptor_agent_b17cea0a41fc57a0 = []byte{
-	// 221 bytes of a gzipped FileDescriptorProto
+var fileDescriptor_agent_27c18e788072c0f3 = []byte{
+	// 214 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xe2, 0xe2, 0x4e, 0x4c, 0x4f, 0xcd,
 	0x2b, 0xd1, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x00, 0x53, 0xc9, 0xf9, 0x39, 0x4a, 0xd2,
 	0x5c, 0x3c, 0xee, 0xa9, 0x25, 0xce, 0xf9, 0x79, 0x69, 0x99, 0xe9, 0x41, 0xa9, 0x85, 0x42, 0xdc,
@@ -348,10 +345,10 @@ var fileDescriptor_agent_b17cea0a41fc57a0 = []byte{
 	0xda, 0x5c, 0xbc, 0x01, 0xa5, 0xc5, 0x19, 0xd8, 0x4d, 0x42, 0x57, 0x2c, 0xc7, 0xc5, 0x1f, 0x94,
 	0x9a, 0x9b, 0x5f, 0x96, 0x8a, 0xc3, 0x62, 0x5d, 0x90, 0x61, 0x39, 0x39, 0x08, 0x59, 0x1e, 0x2e,
 	0x96, 0xec, 0xd4, 0xca, 0x62, 0x09, 0x46, 0x05, 0x66, 0x0d, 0x4e, 0x21, 0x3e, 0x2e, 0x36, 0xb0,
-	0x69, 0xc5, 0x12, 0x4c, 0x20, 0x3e, 0x9a, 0xf2, 0xe2, 0x02, 0xfc, 0xca, 0xb5, 0x3a, 0x19, 0xb9,
-	0x38, 0x7d, 0x8b, 0xd3, 0x43, 0x2a, 0x0b, 0x52, 0x3d, 0x53, 0x84, 0x84, 0xb8, 0xf8, 0x90, 0x43,
-	0xc0, 0x33, 0x45, 0x80, 0x11, 0x55, 0xac, 0xb8, 0xc0, 0x33, 0x45, 0x80, 0x49, 0x48, 0x98, 0x8b,
-	0x1f, 0xc5, 0x83, 0x9e, 0x29, 0x02, 0xcc, 0x42, 0xa2, 0x5c, 0x82, 0x68, 0x1e, 0xf1, 0x4c, 0x11,
-	0x60, 0x81, 0xa8, 0x45, 0x72, 0xbf, 0x67, 0x8a, 0x00, 0x2b, 0x9a, 0x20, 0xd8, 0x54, 0x36, 0x40,
-	0x00, 0x00, 0x00, 0xff, 0xff, 0x03, 0xb9, 0x3e, 0xfd, 0x97, 0x01, 0x00, 0x00,
+	0x69, 0xc5, 0x12, 0x4c, 0x20, 0x3e, 0x9a, 0xf2, 0xe2, 0x02, 0xfc, 0xca, 0xb5, 0x4a, 0xb9, 0x38,
+	0x7d, 0x8b, 0xd3, 0x43, 0x2a, 0x0b, 0x52, 0x3d, 0x53, 0x84, 0x84, 0xb8, 0xf8, 0x90, 0x03, 0xc0,
+	0x33, 0x45, 0x80, 0x51, 0x48, 0x94, 0x4b, 0x10, 0xcd, 0x79, 0x9e, 0x29, 0x02, 0x4c, 0x42, 0xc2,
+	0x5c, 0xfc, 0x28, 0xae, 0xf2, 0x4c, 0x11, 0x60, 0x46, 0x13, 0x2c, 0x2e, 0xf0, 0x4c, 0x11, 0x60,
+	0x81, 0x08, 0x22, 0x05, 0x86, 0x67, 0x8a, 0x00, 0x2b, 0x20, 0x00, 0x00, 0xff, 0xff, 0x32, 0x5a,
+	0x6d, 0x49, 0x82, 0x01, 0x00, 0x00,
 }

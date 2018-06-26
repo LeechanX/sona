@@ -2,11 +2,10 @@ package protocol;
 
 enum MsgTypeId {
     GetConfigReqId = 1;//client向agent索取配置
-    GetConfigRspId = 2;//broker把配置信息回复给agent
-    PushConfigReqId = 3;//broker将配置推送给agent
-    RemoveConfigReqId = 4;//broker将删除配合命令发送给agent
-    PullConfigReqId = 5;//agent向broker拉取最新配置，同时充当心跳
-    PullConfigRspId = 6;//broker回应agent的拉取请求
+    RemoveConfigReqId = 2;//broker将删除配合命令发送给agent
+    PullConfigReqId = 3;//agent向broker拉取最新配置，同时充当心跳
+    PullConfigRspId = 4;//broker回应agent的拉取请求
+    PushConfigReqId = 5;//broker将配置推送给agent
 }
 
 message GetConfigReq {
