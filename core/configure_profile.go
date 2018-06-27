@@ -9,8 +9,11 @@ import (
 )
 
 const (
-	KeyCap uint = 160
-	ValueCap uint = 40
+	FiledNumber uint = 5
+	//产品线名.业务组名.服务名.所需section.配置key, 其中“产品线名.业务组名.服务名”组成serviceId用于标识一个服务
+	//每个字段不得超过30字节
+	KeyCap uint = 155
+	ValueCap uint = 35
 	//bucket个数
 	//多出一个bucket用于存放那些其bucket已装不下的配置们
 	BucketCap uint = 100 + 1
