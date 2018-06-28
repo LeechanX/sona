@@ -37,15 +37,15 @@ func EncodeMessage(cmdId MsgTypeId, pb proto.Message) []byte {
 	return buf.Bytes()
 }
 
-func DecodeUDPMessage(conn *net.UDPConn) (MsgTypeId, []byte, error) {
+func DecodeUDPMessage(conn *net.UDPConn) (MsgTypeId, *net.UDPAddr, []byte, error) {
 	data := make([]byte, TotalLengthLimit)
-	nBytes, _, err := conn.ReadFromUDP(data)
+	nBytes, cliAddr, err := conn.ReadFromUDP(data)
 	if err != nil {
-		return MsgTypeId(0), nil, err
+		return MsgTypeId(0), nil, nil, err
 	}
 
 	if nBytes <= HeadBytes {
-		return MsgTypeId(0), nil, errors.New(fmt.Sprintf(
+		return MsgTypeId(0), nil, nil, errors.New(fmt.Sprintf(
 			"receive from udp length error: %d\n", nBytes))
 	}
 	buf := bytes.NewBuffer(data)
@@ -53,14 +53,14 @@ func DecodeUDPMessage(conn *net.UDPConn) (MsgTypeId, []byte, error) {
 	head := MsgHead{}
 	err = binary.Read(buf, binary.BigEndian, &head)
 	if err != nil {
-		return MsgTypeId(0), nil, errors.New(fmt.Sprintf(
+		return MsgTypeId(0), nil, nil, errors.New(fmt.Sprintf(
 			"receive from udp data format error: %s\n", err))
 	}
 	if head.Length <= HeadBytes || head.Length > TotalLengthLimit {
-		return MsgTypeId(0), nil, errors.New(fmt.Sprintf(
+		return MsgTypeId(0), nil, nil, errors.New(fmt.Sprintf(
 			"receive from udp data format error, length %d\n", head.Length))
 	}
-	return head.CmdId, data[HeadBytes:], nil
+	return head.CmdId, cliAddr, data[HeadBytes:], nil
 }
 
 func DecodeTCPMessage(conn *net.TCPConn) (MsgTypeId, []byte, error) {
@@ -68,6 +68,7 @@ func DecodeTCPMessage(conn *net.TCPConn) (MsgTypeId, []byte, error) {
 	//https://www.cnblogs.com/ghj1976/p/3435940.html
 	//tcpConn.Read和io.ReadFull的区别，很关键
 	//先读取包头
+	//TODO: 设置超时
 	_, err := io.ReadFull(conn, data[:HeadBytes])
 	if err != nil {
 		return MsgTypeId(0), nil, err

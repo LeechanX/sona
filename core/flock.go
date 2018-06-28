@@ -79,6 +79,12 @@ func (wl *WrFlock) WRLock() error {
 	return syscall.FcntlFlock(wl.file.Fd(), syscall.F_SETLKW, &(wl.flock))
 }
 
+//上互斥锁（非阻塞）
+func (wl *WrFlock) WRLockNoWait() error {
+	wl.flock.Type = syscall.F_WRLCK
+	return syscall.FcntlFlock(wl.file.Fd(), syscall.F_SETLK, &(wl.flock))
+}
+
 func (wl *WrFlock) Release() error {
 	wl.flock.Type = syscall.F_UNLCK
 	return syscall.FcntlFlock(wl.file.Fd(), syscall.F_SETLK, &(wl.flock))

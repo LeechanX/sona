@@ -65,14 +65,19 @@ func main() {
 		log.Fatalf("can's resolve udp address 127.0.0.1:9901\n")
 		os.Exit(1)
 	}
+
 	//创建TCP客户端去连接broker
 	addrStr := fmt.Sprintf("%s:%d", logic.GConf.BrokerIp, logic.GConf.BrokerPort)
 	brokerConnector := logic.CreateConnect()
 
-	//协程1：对客户端提供服务
-	go logic.ClientService(udpAddr, brokerConnector)
+	//创建UDP服务器
+	clientService := logic.CreateClientService(udpAddr)
+	//协程1：对客户端提供读取服务
+	go clientService.Receiver(controller, brokerConnector)
+	//协程2：对客户端提供回复服务
+	go clientService.Sender()
 
-	//协程2：周期性更新配置
+	//协程3：周期性更新配置
 	go logic.PeriodicPull(controller, brokerConnector)
 
 	for {
@@ -82,13 +87,13 @@ func main() {
 		}
 		//连接已建立
 		//创建2个协程
-		//协程3：向broker拉取配置
+		//协程4：向broker拉取配置
 		brokerConnector.Wg.Add(1)
-		go logic.PullFromBroker(brokerConnector)
+		go brokerConnector.Pulling()
 
-		//协程4：接收来自broker的消息
+		//协程5：接收来自broker的消息
 		brokerConnector.Wg.Add(1)
-		go logic.ReceiveFromBroker(controller, brokerConnector)
+		go brokerConnector.Receiving(controller, clientService)
 
 		//等待到2个协程终止，说明网络出了问题
 		brokerConnector.Wg.Wait()

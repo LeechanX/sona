@@ -133,6 +133,11 @@ func receiver(c *Connection) {
 				//告知sender G
 				c.sendQueue<- &rsp
 			}
+		} else if cmdId == protocol.MsgTypeId_SubscribeReqId {
+			//agent向broker订阅配置
+			//注册订阅关系
+
+			//如果已有此配置，则回复内容
 		} else {
 			log.Printf("unknown request cmd id: %d\n", cmdId)
 		}

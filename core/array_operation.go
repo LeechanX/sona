@@ -30,16 +30,16 @@ func getBucketKey(bucket *[BucketSize]byte, index uint) string {
 	return string(bucket[start + 2:start + 2 + keyLen])
 }
 
-//获取一个bucket中所有配置
-func getBucketConfigs(bucket *[BucketSize]byte) map[string]string {
-	configs := make(map[string]string)
+//获取一个bucket中所有配置，仅加载时需要调用
+func getBucketTotalConfigs(bucket *[BucketSize]byte) map[string]string {
+	totalConfigs := make(map[string]string)
 	num := getBucketLen(bucket)
 	for i := uint(0);i < num; i++ {
 		key := getBucketKey(bucket, i)
 		value := getBucketValue(bucket, i)
-		configs[key] = value
+		totalConfigs[key] = value
 	}
-	return configs
+	return totalConfigs
 }
 
 //从某bucket中，取出索引为index的配置value

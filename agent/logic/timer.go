@@ -9,25 +9,24 @@ import (
 )
 
 func PeriodicPull(controller *core.ConfigController, c *Connection) {
+	//周期性更新每个现有service的配置
 	for {
-		for idx := uint(0);idx < core.BucketCap;idx++ {
-			confMap := controller.GetAll(idx)
-			if len(confMap) != 0 {
-				log.Printf("Periodic Pull Routine: try to update bucket %d\n", idx)
-				pullConfigReq := protocol.PullConfigReq{}
-				for key, value := range confMap {
-					pullConfigReq.Keys = append(pullConfigReq.Keys, key)
-					pullConfigReq.Values = append(pullConfigReq.Values, value)
-				}
-				if atomic.LoadInt32(&c.status) == kConnStatusConnected {
-					c.sendQueue<- &pullConfigReq
-				} else {
-					//连接已经断开，则不发送
-					//DO NOTHING
-				}
-			}
+		serviceKeys := controller.GetAllServiceKeys()
+		for serviceKey := range serviceKeys {
 			//sleep 1s
-			time.Sleep(time.Second * 1)
+			log.Printf("Periodic Pull Routine: try to update %s's configures\n", serviceKey)
+			if atomic.LoadInt32(&c.status) == kConnStatusConnected {
+				req := protocol.PullServiceConfigReq{}
+				req.ServiceKey = &serviceKey
+				c.sendQueue<- &req
+			} else {
+				//连接已经断开，则不发送
+				//DO NOTHING
+			}
+			time.Sleep(time.Second * 10)
+		}
+		if len(serviceKeys) == 0 {
+			time.Sleep(time.Second * 10)
 		}
 	}
 }

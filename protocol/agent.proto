@@ -1,62 +1,76 @@
 package protocol;
 
 enum MsgTypeId {
-    GetConfigReqId = 1;//client向agent索取配置
-    RemoveConfigReqId = 2;//broker将删除配合命令发送给agent
-    PullConfigReqId = 3;//agent向broker拉取最新配置，同时充当心跳
-    PullConfigRspId = 4;//broker回应agent的拉取请求
-    PushConfigReqId = 5;//broker将配置推送给agent
-    AddNewConfigReqId = 6;//manager向broker发新增配置操作
-    UpdateConfigReqId = 7;//manager向broker发修改配置操作
-    DeleteConfigReqId = 8;//manager向broker发删除配置操作
-    ManageConfigRspId = 9;//broker向manager对操作结果的回报
+    SubscribeReqId        = 1;//client向agent发起订阅请求,agent向broker发起订阅请求
+    SubscribeBrokerRspId  = 2;//broker向agent回复订阅请求
+    SubscribeAgentRspId   = 3;//agent向client回复订阅请求
+    AddConfigReqId        = 4;//broker向client推送添加一个配置项命令
+    DelConfigReqId        = 5;//broker向client发起删除一个配置项命令
+    DelServiceConfigReqId = 6;//broker向client发起一个服务的全部删除配置项命令
+    UpdateConfigReqId     = 7;//broker向client发起更新一个配置项的命令
+    PullServiceConfigReqId = 8;//agent向broker拉取一个服务的最新配置
+    PullServiceConfigRspId = 9;//broker回复agent一个服务的最新配置
 }
 
-message GetConfigReq {
-    required string key = 1;
+//client向agent发起订阅请求,agent向broker发起订阅请求
+message SubscribeReq {
+    required string serviceKey = 1;
 }
 
-message GetConfigRsp {
-    required string key   = 1;
-    required string value = 2;
+//broker向agent回复订阅请求
+message SubscribeBrokerRsp {
+    required string serviceKey = 1;
+    required int32 code = 2;//是否订阅成功，0成功 -1失败
+    repeated string keys = 3;
+    repeated string values = 4;
 }
 
-message PushConfigReq {
-    required string key   = 1;
-    required string value = 2;
+//agent向client回复订阅请求
+message SubscribeAgentRsp {
+    required string serviceKey = 1;
+    required int32 code = 2;//是否订阅成功，0成功 -1失败
 }
 
-message RemoveConfigReq {
-    required string key = 1;
+//broker向client推送添加一个配置项命令
+message AddConfigReq {
+    required string serviceKey = 1;
+    required string key = 2;
+    required string value = 3;
 }
 
-message PullConfigReq {
-    repeated string keys = 1;
-    repeated string values = 2;
+//broker向client发起删除一个配置项命令
+message DelConfigReq {
+    required string serviceKey = 1;
+    required string key = 2;
 }
 
-message PullConfigRsp {
-    repeated string keys   = 1;
-    repeated string values = 2;
+//broker向client发起一个服务的全部删除配置项命令
+message DelServiceConfigReq {
+    required string serviceKey = 1;
 }
 
-message AddNewConfigReq {
-    required string key = 1;
-    required string value = 2;    
-}
-
+//broker向client发起更新一个配置项的命令
 message UpdateConfigReq {
-    required string key = 1;
-    required string oldValue = 2;
-    required string newValue = 3;
+    required string serviceKey = 1;
+    required string key = 2;
+    required string value = 3;
 }
 
-message DeleteConfigReq {
-    required string key = 1;
-    required string oldValue = 2;
+//agent向broker拉取一个服务的最新配置
+message PullServiceConfigReq {
+    required string serviceKey = 1;
 }
 
-message ManageConfigRsp {
-    required int32 retcode = 1;
-    optional string errmsg = 2;
+//broker回复agent一个服务的最新配置
+message PullServiceConfigRsp {
+    required string serviceKey = 1;
+    repeated string keys = 2;
+    repeated string values = 3;//如果keys values为空，说明此服务的配置已被删除
 }
+
+
+
+
+
+
+

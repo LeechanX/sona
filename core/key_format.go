@@ -5,10 +5,10 @@ import "strings"
 func IsValidityKey(key string) bool {
     //prductionname.groupname.servicename.section.key
     s := strings.Split(key, ".")
-    if len(s) != 5 {
+    if len(s) != FieldNumber {
         return false
     }
-    for _, field := range(s) {
+    for _, field := range s {
         if field == "" {
             return false
         }
@@ -17,12 +17,18 @@ func IsValidityKey(key string) bool {
 }
 
 //splice total key
-func GetTotalKey(serviceId string, section string, key string) string {
-    return serviceId + "." + section + "." + key
+func SpliceKey(serviceKey string, configKey string) string {
+    return serviceKey + "." + configKey
 }
 
-//extract the service Id
-func GetServiceId(key string) string {
+//extract the service key
+func GetServiceKey(key string) string {
     s := strings.Split(key, ".")
     return strings.Join(s[:3], ".")
+}
+
+//获取服务内的配置名
+func GetConfigKey(key string) string {
+    s := strings.Split(key, ".")
+    return strings.Join(s[3:], ".")
 }

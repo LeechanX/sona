@@ -21,38 +21,38 @@ const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 type MsgTypeId int32
 
 const (
-	MsgTypeId_GetConfigReqId    MsgTypeId = 1
-	MsgTypeId_RemoveConfigReqId MsgTypeId = 2
-	MsgTypeId_PullConfigReqId   MsgTypeId = 3
-	MsgTypeId_PullConfigRspId   MsgTypeId = 4
-	MsgTypeId_PushConfigReqId   MsgTypeId = 5
-	MsgTypeId_AddNewConfigReqId MsgTypeId = 6
-	MsgTypeId_UpdateConfigReqId MsgTypeId = 7
-	MsgTypeId_DeleteConfigReqId MsgTypeId = 8
-	MsgTypeId_ManageConfigRspId MsgTypeId = 9
+	MsgTypeId_SubscribeReqId         MsgTypeId = 1
+	MsgTypeId_SubscribeBrokerRspId   MsgTypeId = 2
+	MsgTypeId_SubscribeAgentRspId    MsgTypeId = 3
+	MsgTypeId_AddConfigReqId         MsgTypeId = 4
+	MsgTypeId_DelConfigReqId         MsgTypeId = 5
+	MsgTypeId_DelServiceConfigReqId  MsgTypeId = 6
+	MsgTypeId_UpdateConfigReqId      MsgTypeId = 7
+	MsgTypeId_PullServiceConfigReqId MsgTypeId = 8
+	MsgTypeId_PullServiceConfigRspId MsgTypeId = 9
 )
 
 var MsgTypeId_name = map[int32]string{
-	1: "GetConfigReqId",
-	2: "RemoveConfigReqId",
-	3: "PullConfigReqId",
-	4: "PullConfigRspId",
-	5: "PushConfigReqId",
-	6: "AddNewConfigReqId",
+	1: "SubscribeReqId",
+	2: "SubscribeBrokerRspId",
+	3: "SubscribeAgentRspId",
+	4: "AddConfigReqId",
+	5: "DelConfigReqId",
+	6: "DelServiceConfigReqId",
 	7: "UpdateConfigReqId",
-	8: "DeleteConfigReqId",
-	9: "ManageConfigRspId",
+	8: "PullServiceConfigReqId",
+	9: "PullServiceConfigRspId",
 }
 var MsgTypeId_value = map[string]int32{
-	"GetConfigReqId":    1,
-	"RemoveConfigReqId": 2,
-	"PullConfigReqId":   3,
-	"PullConfigRspId":   4,
-	"PushConfigReqId":   5,
-	"AddNewConfigReqId": 6,
-	"UpdateConfigReqId": 7,
-	"DeleteConfigReqId": 8,
-	"ManageConfigRspId": 9,
+	"SubscribeReqId":         1,
+	"SubscribeBrokerRspId":   2,
+	"SubscribeAgentRspId":    3,
+	"AddConfigReqId":         4,
+	"DelConfigReqId":         5,
+	"DelServiceConfigReqId":  6,
+	"UpdateConfigReqId":      7,
+	"PullServiceConfigReqId": 8,
+	"PullServiceConfigRspId": 9,
 }
 
 func (x MsgTypeId) Enum() *MsgTypeId {
@@ -72,319 +72,304 @@ func (x *MsgTypeId) UnmarshalJSON(data []byte) error {
 	return nil
 }
 func (MsgTypeId) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_agent_007ec2824bab5881, []int{0}
+	return fileDescriptor_agent_af89246131cb6230, []int{0}
 }
 
-type GetConfigReq struct {
-	Key                  *string  `protobuf:"bytes,1,req,name=key" json:"key,omitempty"`
+// client向agent发起订阅请求,agent向broker发起订阅请求
+type SubscribeReq struct {
+	ServiceKey           *string  `protobuf:"bytes,1,req,name=serviceKey" json:"serviceKey,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *GetConfigReq) Reset()         { *m = GetConfigReq{} }
-func (m *GetConfigReq) String() string { return proto.CompactTextString(m) }
-func (*GetConfigReq) ProtoMessage()    {}
-func (*GetConfigReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_007ec2824bab5881, []int{0}
+func (m *SubscribeReq) Reset()         { *m = SubscribeReq{} }
+func (m *SubscribeReq) String() string { return proto.CompactTextString(m) }
+func (*SubscribeReq) ProtoMessage()    {}
+func (*SubscribeReq) Descriptor() ([]byte, []int) {
+	return fileDescriptor_agent_af89246131cb6230, []int{0}
 }
-func (m *GetConfigReq) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_GetConfigReq.Unmarshal(m, b)
+func (m *SubscribeReq) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SubscribeReq.Unmarshal(m, b)
 }
-func (m *GetConfigReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_GetConfigReq.Marshal(b, m, deterministic)
+func (m *SubscribeReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SubscribeReq.Marshal(b, m, deterministic)
 }
-func (dst *GetConfigReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GetConfigReq.Merge(dst, src)
+func (dst *SubscribeReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SubscribeReq.Merge(dst, src)
 }
-func (m *GetConfigReq) XXX_Size() int {
-	return xxx_messageInfo_GetConfigReq.Size(m)
+func (m *SubscribeReq) XXX_Size() int {
+	return xxx_messageInfo_SubscribeReq.Size(m)
 }
-func (m *GetConfigReq) XXX_DiscardUnknown() {
-	xxx_messageInfo_GetConfigReq.DiscardUnknown(m)
+func (m *SubscribeReq) XXX_DiscardUnknown() {
+	xxx_messageInfo_SubscribeReq.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_GetConfigReq proto.InternalMessageInfo
+var xxx_messageInfo_SubscribeReq proto.InternalMessageInfo
 
-func (m *GetConfigReq) GetKey() string {
-	if m != nil && m.Key != nil {
-		return *m.Key
+func (m *SubscribeReq) GetServiceKey() string {
+	if m != nil && m.ServiceKey != nil {
+		return *m.ServiceKey
 	}
 	return ""
 }
 
-type GetConfigRsp struct {
-	Key                  *string  `protobuf:"bytes,1,req,name=key" json:"key,omitempty"`
-	Value                *string  `protobuf:"bytes,2,req,name=value" json:"value,omitempty"`
+// broker向agent回复订阅请求
+type SubscribeBrokerRsp struct {
+	ServiceKey           *string  `protobuf:"bytes,1,req,name=serviceKey" json:"serviceKey,omitempty"`
+	Code                 *int32   `protobuf:"varint,2,req,name=code" json:"code,omitempty"`
+	Keys                 []string `protobuf:"bytes,3,rep,name=keys" json:"keys,omitempty"`
+	Values               []string `protobuf:"bytes,4,rep,name=values" json:"values,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *GetConfigRsp) Reset()         { *m = GetConfigRsp{} }
-func (m *GetConfigRsp) String() string { return proto.CompactTextString(m) }
-func (*GetConfigRsp) ProtoMessage()    {}
-func (*GetConfigRsp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_007ec2824bab5881, []int{1}
+func (m *SubscribeBrokerRsp) Reset()         { *m = SubscribeBrokerRsp{} }
+func (m *SubscribeBrokerRsp) String() string { return proto.CompactTextString(m) }
+func (*SubscribeBrokerRsp) ProtoMessage()    {}
+func (*SubscribeBrokerRsp) Descriptor() ([]byte, []int) {
+	return fileDescriptor_agent_af89246131cb6230, []int{1}
 }
-func (m *GetConfigRsp) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_GetConfigRsp.Unmarshal(m, b)
+func (m *SubscribeBrokerRsp) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SubscribeBrokerRsp.Unmarshal(m, b)
 }
-func (m *GetConfigRsp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_GetConfigRsp.Marshal(b, m, deterministic)
+func (m *SubscribeBrokerRsp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SubscribeBrokerRsp.Marshal(b, m, deterministic)
 }
-func (dst *GetConfigRsp) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GetConfigRsp.Merge(dst, src)
+func (dst *SubscribeBrokerRsp) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SubscribeBrokerRsp.Merge(dst, src)
 }
-func (m *GetConfigRsp) XXX_Size() int {
-	return xxx_messageInfo_GetConfigRsp.Size(m)
+func (m *SubscribeBrokerRsp) XXX_Size() int {
+	return xxx_messageInfo_SubscribeBrokerRsp.Size(m)
 }
-func (m *GetConfigRsp) XXX_DiscardUnknown() {
-	xxx_messageInfo_GetConfigRsp.DiscardUnknown(m)
+func (m *SubscribeBrokerRsp) XXX_DiscardUnknown() {
+	xxx_messageInfo_SubscribeBrokerRsp.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_GetConfigRsp proto.InternalMessageInfo
+var xxx_messageInfo_SubscribeBrokerRsp proto.InternalMessageInfo
 
-func (m *GetConfigRsp) GetKey() string {
-	if m != nil && m.Key != nil {
-		return *m.Key
+func (m *SubscribeBrokerRsp) GetServiceKey() string {
+	if m != nil && m.ServiceKey != nil {
+		return *m.ServiceKey
 	}
 	return ""
 }
 
-func (m *GetConfigRsp) GetValue() string {
-	if m != nil && m.Value != nil {
-		return *m.Value
+func (m *SubscribeBrokerRsp) GetCode() int32 {
+	if m != nil && m.Code != nil {
+		return *m.Code
 	}
-	return ""
+	return 0
 }
 
-type PushConfigReq struct {
-	Key                  *string  `protobuf:"bytes,1,req,name=key" json:"key,omitempty"`
-	Value                *string  `protobuf:"bytes,2,req,name=value" json:"value,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *PushConfigReq) Reset()         { *m = PushConfigReq{} }
-func (m *PushConfigReq) String() string { return proto.CompactTextString(m) }
-func (*PushConfigReq) ProtoMessage()    {}
-func (*PushConfigReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_007ec2824bab5881, []int{2}
-}
-func (m *PushConfigReq) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PushConfigReq.Unmarshal(m, b)
-}
-func (m *PushConfigReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PushConfigReq.Marshal(b, m, deterministic)
-}
-func (dst *PushConfigReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PushConfigReq.Merge(dst, src)
-}
-func (m *PushConfigReq) XXX_Size() int {
-	return xxx_messageInfo_PushConfigReq.Size(m)
-}
-func (m *PushConfigReq) XXX_DiscardUnknown() {
-	xxx_messageInfo_PushConfigReq.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PushConfigReq proto.InternalMessageInfo
-
-func (m *PushConfigReq) GetKey() string {
-	if m != nil && m.Key != nil {
-		return *m.Key
-	}
-	return ""
-}
-
-func (m *PushConfigReq) GetValue() string {
-	if m != nil && m.Value != nil {
-		return *m.Value
-	}
-	return ""
-}
-
-type RemoveConfigReq struct {
-	Key                  *string  `protobuf:"bytes,1,req,name=key" json:"key,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *RemoveConfigReq) Reset()         { *m = RemoveConfigReq{} }
-func (m *RemoveConfigReq) String() string { return proto.CompactTextString(m) }
-func (*RemoveConfigReq) ProtoMessage()    {}
-func (*RemoveConfigReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_007ec2824bab5881, []int{3}
-}
-func (m *RemoveConfigReq) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_RemoveConfigReq.Unmarshal(m, b)
-}
-func (m *RemoveConfigReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_RemoveConfigReq.Marshal(b, m, deterministic)
-}
-func (dst *RemoveConfigReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RemoveConfigReq.Merge(dst, src)
-}
-func (m *RemoveConfigReq) XXX_Size() int {
-	return xxx_messageInfo_RemoveConfigReq.Size(m)
-}
-func (m *RemoveConfigReq) XXX_DiscardUnknown() {
-	xxx_messageInfo_RemoveConfigReq.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_RemoveConfigReq proto.InternalMessageInfo
-
-func (m *RemoveConfigReq) GetKey() string {
-	if m != nil && m.Key != nil {
-		return *m.Key
-	}
-	return ""
-}
-
-type PullConfigReq struct {
-	Keys                 []string `protobuf:"bytes,1,rep,name=keys" json:"keys,omitempty"`
-	Values               []string `protobuf:"bytes,2,rep,name=values" json:"values,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *PullConfigReq) Reset()         { *m = PullConfigReq{} }
-func (m *PullConfigReq) String() string { return proto.CompactTextString(m) }
-func (*PullConfigReq) ProtoMessage()    {}
-func (*PullConfigReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_007ec2824bab5881, []int{4}
-}
-func (m *PullConfigReq) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PullConfigReq.Unmarshal(m, b)
-}
-func (m *PullConfigReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PullConfigReq.Marshal(b, m, deterministic)
-}
-func (dst *PullConfigReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PullConfigReq.Merge(dst, src)
-}
-func (m *PullConfigReq) XXX_Size() int {
-	return xxx_messageInfo_PullConfigReq.Size(m)
-}
-func (m *PullConfigReq) XXX_DiscardUnknown() {
-	xxx_messageInfo_PullConfigReq.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PullConfigReq proto.InternalMessageInfo
-
-func (m *PullConfigReq) GetKeys() []string {
+func (m *SubscribeBrokerRsp) GetKeys() []string {
 	if m != nil {
 		return m.Keys
 	}
 	return nil
 }
 
-func (m *PullConfigReq) GetValues() []string {
+func (m *SubscribeBrokerRsp) GetValues() []string {
 	if m != nil {
 		return m.Values
 	}
 	return nil
 }
 
-type PullConfigRsp struct {
-	Keys                 []string `protobuf:"bytes,1,rep,name=keys" json:"keys,omitempty"`
-	Values               []string `protobuf:"bytes,2,rep,name=values" json:"values,omitempty"`
+// agent向client回复订阅请求
+type SubscribeAgentRsp struct {
+	ServiceKey           *string  `protobuf:"bytes,1,req,name=serviceKey" json:"serviceKey,omitempty"`
+	Code                 *int32   `protobuf:"varint,2,req,name=code" json:"code,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *PullConfigRsp) Reset()         { *m = PullConfigRsp{} }
-func (m *PullConfigRsp) String() string { return proto.CompactTextString(m) }
-func (*PullConfigRsp) ProtoMessage()    {}
-func (*PullConfigRsp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_007ec2824bab5881, []int{5}
+func (m *SubscribeAgentRsp) Reset()         { *m = SubscribeAgentRsp{} }
+func (m *SubscribeAgentRsp) String() string { return proto.CompactTextString(m) }
+func (*SubscribeAgentRsp) ProtoMessage()    {}
+func (*SubscribeAgentRsp) Descriptor() ([]byte, []int) {
+	return fileDescriptor_agent_af89246131cb6230, []int{2}
 }
-func (m *PullConfigRsp) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PullConfigRsp.Unmarshal(m, b)
+func (m *SubscribeAgentRsp) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SubscribeAgentRsp.Unmarshal(m, b)
 }
-func (m *PullConfigRsp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PullConfigRsp.Marshal(b, m, deterministic)
+func (m *SubscribeAgentRsp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SubscribeAgentRsp.Marshal(b, m, deterministic)
 }
-func (dst *PullConfigRsp) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PullConfigRsp.Merge(dst, src)
+func (dst *SubscribeAgentRsp) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SubscribeAgentRsp.Merge(dst, src)
 }
-func (m *PullConfigRsp) XXX_Size() int {
-	return xxx_messageInfo_PullConfigRsp.Size(m)
+func (m *SubscribeAgentRsp) XXX_Size() int {
+	return xxx_messageInfo_SubscribeAgentRsp.Size(m)
 }
-func (m *PullConfigRsp) XXX_DiscardUnknown() {
-	xxx_messageInfo_PullConfigRsp.DiscardUnknown(m)
+func (m *SubscribeAgentRsp) XXX_DiscardUnknown() {
+	xxx_messageInfo_SubscribeAgentRsp.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_PullConfigRsp proto.InternalMessageInfo
+var xxx_messageInfo_SubscribeAgentRsp proto.InternalMessageInfo
 
-func (m *PullConfigRsp) GetKeys() []string {
-	if m != nil {
-		return m.Keys
+func (m *SubscribeAgentRsp) GetServiceKey() string {
+	if m != nil && m.ServiceKey != nil {
+		return *m.ServiceKey
 	}
-	return nil
+	return ""
 }
 
-func (m *PullConfigRsp) GetValues() []string {
-	if m != nil {
-		return m.Values
+func (m *SubscribeAgentRsp) GetCode() int32 {
+	if m != nil && m.Code != nil {
+		return *m.Code
 	}
-	return nil
+	return 0
 }
 
-type AddNewConfigReq struct {
-	Key                  *string  `protobuf:"bytes,1,req,name=key" json:"key,omitempty"`
-	Value                *string  `protobuf:"bytes,2,req,name=value" json:"value,omitempty"`
+// broker向client推送添加一个配置项命令
+type AddConfigReq struct {
+	ServiceKey           *string  `protobuf:"bytes,1,req,name=serviceKey" json:"serviceKey,omitempty"`
+	Key                  *string  `protobuf:"bytes,2,req,name=key" json:"key,omitempty"`
+	Value                *string  `protobuf:"bytes,3,req,name=value" json:"value,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *AddNewConfigReq) Reset()         { *m = AddNewConfigReq{} }
-func (m *AddNewConfigReq) String() string { return proto.CompactTextString(m) }
-func (*AddNewConfigReq) ProtoMessage()    {}
-func (*AddNewConfigReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_007ec2824bab5881, []int{6}
+func (m *AddConfigReq) Reset()         { *m = AddConfigReq{} }
+func (m *AddConfigReq) String() string { return proto.CompactTextString(m) }
+func (*AddConfigReq) ProtoMessage()    {}
+func (*AddConfigReq) Descriptor() ([]byte, []int) {
+	return fileDescriptor_agent_af89246131cb6230, []int{3}
 }
-func (m *AddNewConfigReq) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_AddNewConfigReq.Unmarshal(m, b)
+func (m *AddConfigReq) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_AddConfigReq.Unmarshal(m, b)
 }
-func (m *AddNewConfigReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_AddNewConfigReq.Marshal(b, m, deterministic)
+func (m *AddConfigReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_AddConfigReq.Marshal(b, m, deterministic)
 }
-func (dst *AddNewConfigReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AddNewConfigReq.Merge(dst, src)
+func (dst *AddConfigReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AddConfigReq.Merge(dst, src)
 }
-func (m *AddNewConfigReq) XXX_Size() int {
-	return xxx_messageInfo_AddNewConfigReq.Size(m)
+func (m *AddConfigReq) XXX_Size() int {
+	return xxx_messageInfo_AddConfigReq.Size(m)
 }
-func (m *AddNewConfigReq) XXX_DiscardUnknown() {
-	xxx_messageInfo_AddNewConfigReq.DiscardUnknown(m)
+func (m *AddConfigReq) XXX_DiscardUnknown() {
+	xxx_messageInfo_AddConfigReq.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_AddNewConfigReq proto.InternalMessageInfo
+var xxx_messageInfo_AddConfigReq proto.InternalMessageInfo
 
-func (m *AddNewConfigReq) GetKey() string {
+func (m *AddConfigReq) GetServiceKey() string {
+	if m != nil && m.ServiceKey != nil {
+		return *m.ServiceKey
+	}
+	return ""
+}
+
+func (m *AddConfigReq) GetKey() string {
 	if m != nil && m.Key != nil {
 		return *m.Key
 	}
 	return ""
 }
 
-func (m *AddNewConfigReq) GetValue() string {
+func (m *AddConfigReq) GetValue() string {
 	if m != nil && m.Value != nil {
 		return *m.Value
 	}
 	return ""
 }
 
+// broker向client发起删除一个配置项命令
+type DelConfigReq struct {
+	ServiceKey           *string  `protobuf:"bytes,1,req,name=serviceKey" json:"serviceKey,omitempty"`
+	Key                  *string  `protobuf:"bytes,2,req,name=key" json:"key,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *DelConfigReq) Reset()         { *m = DelConfigReq{} }
+func (m *DelConfigReq) String() string { return proto.CompactTextString(m) }
+func (*DelConfigReq) ProtoMessage()    {}
+func (*DelConfigReq) Descriptor() ([]byte, []int) {
+	return fileDescriptor_agent_af89246131cb6230, []int{4}
+}
+func (m *DelConfigReq) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_DelConfigReq.Unmarshal(m, b)
+}
+func (m *DelConfigReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_DelConfigReq.Marshal(b, m, deterministic)
+}
+func (dst *DelConfigReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DelConfigReq.Merge(dst, src)
+}
+func (m *DelConfigReq) XXX_Size() int {
+	return xxx_messageInfo_DelConfigReq.Size(m)
+}
+func (m *DelConfigReq) XXX_DiscardUnknown() {
+	xxx_messageInfo_DelConfigReq.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DelConfigReq proto.InternalMessageInfo
+
+func (m *DelConfigReq) GetServiceKey() string {
+	if m != nil && m.ServiceKey != nil {
+		return *m.ServiceKey
+	}
+	return ""
+}
+
+func (m *DelConfigReq) GetKey() string {
+	if m != nil && m.Key != nil {
+		return *m.Key
+	}
+	return ""
+}
+
+// broker向client发起一个服务的全部删除配置项命令
+type DelServiceConfigReq struct {
+	ServiceKey           *string  `protobuf:"bytes,1,req,name=serviceKey" json:"serviceKey,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *DelServiceConfigReq) Reset()         { *m = DelServiceConfigReq{} }
+func (m *DelServiceConfigReq) String() string { return proto.CompactTextString(m) }
+func (*DelServiceConfigReq) ProtoMessage()    {}
+func (*DelServiceConfigReq) Descriptor() ([]byte, []int) {
+	return fileDescriptor_agent_af89246131cb6230, []int{5}
+}
+func (m *DelServiceConfigReq) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_DelServiceConfigReq.Unmarshal(m, b)
+}
+func (m *DelServiceConfigReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_DelServiceConfigReq.Marshal(b, m, deterministic)
+}
+func (dst *DelServiceConfigReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DelServiceConfigReq.Merge(dst, src)
+}
+func (m *DelServiceConfigReq) XXX_Size() int {
+	return xxx_messageInfo_DelServiceConfigReq.Size(m)
+}
+func (m *DelServiceConfigReq) XXX_DiscardUnknown() {
+	xxx_messageInfo_DelServiceConfigReq.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DelServiceConfigReq proto.InternalMessageInfo
+
+func (m *DelServiceConfigReq) GetServiceKey() string {
+	if m != nil && m.ServiceKey != nil {
+		return *m.ServiceKey
+	}
+	return ""
+}
+
+// broker向client发起更新一个配置项的命令
 type UpdateConfigReq struct {
-	Key                  *string  `protobuf:"bytes,1,req,name=key" json:"key,omitempty"`
-	OldValue             *string  `protobuf:"bytes,2,req,name=oldValue" json:"oldValue,omitempty"`
-	NewValue             *string  `protobuf:"bytes,3,req,name=newValue" json:"newValue,omitempty"`
+	ServiceKey           *string  `protobuf:"bytes,1,req,name=serviceKey" json:"serviceKey,omitempty"`
+	Key                  *string  `protobuf:"bytes,2,req,name=key" json:"key,omitempty"`
+	Value                *string  `protobuf:"bytes,3,req,name=value" json:"value,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -394,7 +379,7 @@ func (m *UpdateConfigReq) Reset()         { *m = UpdateConfigReq{} }
 func (m *UpdateConfigReq) String() string { return proto.CompactTextString(m) }
 func (*UpdateConfigReq) ProtoMessage()    {}
 func (*UpdateConfigReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_007ec2824bab5881, []int{7}
+	return fileDescriptor_agent_af89246131cb6230, []int{6}
 }
 func (m *UpdateConfigReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UpdateConfigReq.Unmarshal(m, b)
@@ -414,6 +399,13 @@ func (m *UpdateConfigReq) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_UpdateConfigReq proto.InternalMessageInfo
 
+func (m *UpdateConfigReq) GetServiceKey() string {
+	if m != nil && m.ServiceKey != nil {
+		return *m.ServiceKey
+	}
+	return ""
+}
+
 func (m *UpdateConfigReq) GetKey() string {
 	if m != nil && m.Key != nil {
 		return *m.Key
@@ -421,148 +413,143 @@ func (m *UpdateConfigReq) GetKey() string {
 	return ""
 }
 
-func (m *UpdateConfigReq) GetOldValue() string {
-	if m != nil && m.OldValue != nil {
-		return *m.OldValue
+func (m *UpdateConfigReq) GetValue() string {
+	if m != nil && m.Value != nil {
+		return *m.Value
 	}
 	return ""
 }
 
-func (m *UpdateConfigReq) GetNewValue() string {
-	if m != nil && m.NewValue != nil {
-		return *m.NewValue
-	}
-	return ""
-}
-
-type DeleteConfigReq struct {
-	Key                  *string  `protobuf:"bytes,1,req,name=key" json:"key,omitempty"`
-	OldValue             *string  `protobuf:"bytes,2,req,name=oldValue" json:"oldValue,omitempty"`
+// agent向broker拉取一个服务的最新配置
+type PullServiceConfigReq struct {
+	ServiceKey           *string  `protobuf:"bytes,1,req,name=serviceKey" json:"serviceKey,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *DeleteConfigReq) Reset()         { *m = DeleteConfigReq{} }
-func (m *DeleteConfigReq) String() string { return proto.CompactTextString(m) }
-func (*DeleteConfigReq) ProtoMessage()    {}
-func (*DeleteConfigReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_007ec2824bab5881, []int{8}
+func (m *PullServiceConfigReq) Reset()         { *m = PullServiceConfigReq{} }
+func (m *PullServiceConfigReq) String() string { return proto.CompactTextString(m) }
+func (*PullServiceConfigReq) ProtoMessage()    {}
+func (*PullServiceConfigReq) Descriptor() ([]byte, []int) {
+	return fileDescriptor_agent_af89246131cb6230, []int{7}
 }
-func (m *DeleteConfigReq) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_DeleteConfigReq.Unmarshal(m, b)
+func (m *PullServiceConfigReq) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PullServiceConfigReq.Unmarshal(m, b)
 }
-func (m *DeleteConfigReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_DeleteConfigReq.Marshal(b, m, deterministic)
+func (m *PullServiceConfigReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PullServiceConfigReq.Marshal(b, m, deterministic)
 }
-func (dst *DeleteConfigReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DeleteConfigReq.Merge(dst, src)
+func (dst *PullServiceConfigReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PullServiceConfigReq.Merge(dst, src)
 }
-func (m *DeleteConfigReq) XXX_Size() int {
-	return xxx_messageInfo_DeleteConfigReq.Size(m)
+func (m *PullServiceConfigReq) XXX_Size() int {
+	return xxx_messageInfo_PullServiceConfigReq.Size(m)
 }
-func (m *DeleteConfigReq) XXX_DiscardUnknown() {
-	xxx_messageInfo_DeleteConfigReq.DiscardUnknown(m)
+func (m *PullServiceConfigReq) XXX_DiscardUnknown() {
+	xxx_messageInfo_PullServiceConfigReq.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_DeleteConfigReq proto.InternalMessageInfo
+var xxx_messageInfo_PullServiceConfigReq proto.InternalMessageInfo
 
-func (m *DeleteConfigReq) GetKey() string {
-	if m != nil && m.Key != nil {
-		return *m.Key
+func (m *PullServiceConfigReq) GetServiceKey() string {
+	if m != nil && m.ServiceKey != nil {
+		return *m.ServiceKey
 	}
 	return ""
 }
 
-func (m *DeleteConfigReq) GetOldValue() string {
-	if m != nil && m.OldValue != nil {
-		return *m.OldValue
-	}
-	return ""
-}
-
-type ManageConfigRsp struct {
-	Retcode              *int32   `protobuf:"varint,1,req,name=retcode" json:"retcode,omitempty"`
-	Errmsg               *string  `protobuf:"bytes,2,opt,name=errmsg" json:"errmsg,omitempty"`
+// broker回复agent一个服务的最新配置
+type PullServiceConfigRsp struct {
+	ServiceKey           *string  `protobuf:"bytes,1,req,name=serviceKey" json:"serviceKey,omitempty"`
+	Keys                 []string `protobuf:"bytes,2,rep,name=keys" json:"keys,omitempty"`
+	Values               []string `protobuf:"bytes,3,rep,name=values" json:"values,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ManageConfigRsp) Reset()         { *m = ManageConfigRsp{} }
-func (m *ManageConfigRsp) String() string { return proto.CompactTextString(m) }
-func (*ManageConfigRsp) ProtoMessage()    {}
-func (*ManageConfigRsp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_007ec2824bab5881, []int{9}
+func (m *PullServiceConfigRsp) Reset()         { *m = PullServiceConfigRsp{} }
+func (m *PullServiceConfigRsp) String() string { return proto.CompactTextString(m) }
+func (*PullServiceConfigRsp) ProtoMessage()    {}
+func (*PullServiceConfigRsp) Descriptor() ([]byte, []int) {
+	return fileDescriptor_agent_af89246131cb6230, []int{8}
 }
-func (m *ManageConfigRsp) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ManageConfigRsp.Unmarshal(m, b)
+func (m *PullServiceConfigRsp) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PullServiceConfigRsp.Unmarshal(m, b)
 }
-func (m *ManageConfigRsp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ManageConfigRsp.Marshal(b, m, deterministic)
+func (m *PullServiceConfigRsp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PullServiceConfigRsp.Marshal(b, m, deterministic)
 }
-func (dst *ManageConfigRsp) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ManageConfigRsp.Merge(dst, src)
+func (dst *PullServiceConfigRsp) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PullServiceConfigRsp.Merge(dst, src)
 }
-func (m *ManageConfigRsp) XXX_Size() int {
-	return xxx_messageInfo_ManageConfigRsp.Size(m)
+func (m *PullServiceConfigRsp) XXX_Size() int {
+	return xxx_messageInfo_PullServiceConfigRsp.Size(m)
 }
-func (m *ManageConfigRsp) XXX_DiscardUnknown() {
-	xxx_messageInfo_ManageConfigRsp.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ManageConfigRsp proto.InternalMessageInfo
-
-func (m *ManageConfigRsp) GetRetcode() int32 {
-	if m != nil && m.Retcode != nil {
-		return *m.Retcode
-	}
-	return 0
+func (m *PullServiceConfigRsp) XXX_DiscardUnknown() {
+	xxx_messageInfo_PullServiceConfigRsp.DiscardUnknown(m)
 }
 
-func (m *ManageConfigRsp) GetErrmsg() string {
-	if m != nil && m.Errmsg != nil {
-		return *m.Errmsg
+var xxx_messageInfo_PullServiceConfigRsp proto.InternalMessageInfo
+
+func (m *PullServiceConfigRsp) GetServiceKey() string {
+	if m != nil && m.ServiceKey != nil {
+		return *m.ServiceKey
 	}
 	return ""
+}
+
+func (m *PullServiceConfigRsp) GetKeys() []string {
+	if m != nil {
+		return m.Keys
+	}
+	return nil
+}
+
+func (m *PullServiceConfigRsp) GetValues() []string {
+	if m != nil {
+		return m.Values
+	}
+	return nil
 }
 
 func init() {
-	proto.RegisterType((*GetConfigReq)(nil), "protocol.GetConfigReq")
-	proto.RegisterType((*GetConfigRsp)(nil), "protocol.GetConfigRsp")
-	proto.RegisterType((*PushConfigReq)(nil), "protocol.PushConfigReq")
-	proto.RegisterType((*RemoveConfigReq)(nil), "protocol.RemoveConfigReq")
-	proto.RegisterType((*PullConfigReq)(nil), "protocol.PullConfigReq")
-	proto.RegisterType((*PullConfigRsp)(nil), "protocol.PullConfigRsp")
-	proto.RegisterType((*AddNewConfigReq)(nil), "protocol.AddNewConfigReq")
+	proto.RegisterType((*SubscribeReq)(nil), "protocol.SubscribeReq")
+	proto.RegisterType((*SubscribeBrokerRsp)(nil), "protocol.SubscribeBrokerRsp")
+	proto.RegisterType((*SubscribeAgentRsp)(nil), "protocol.SubscribeAgentRsp")
+	proto.RegisterType((*AddConfigReq)(nil), "protocol.AddConfigReq")
+	proto.RegisterType((*DelConfigReq)(nil), "protocol.DelConfigReq")
+	proto.RegisterType((*DelServiceConfigReq)(nil), "protocol.DelServiceConfigReq")
 	proto.RegisterType((*UpdateConfigReq)(nil), "protocol.UpdateConfigReq")
-	proto.RegisterType((*DeleteConfigReq)(nil), "protocol.DeleteConfigReq")
-	proto.RegisterType((*ManageConfigRsp)(nil), "protocol.ManageConfigRsp")
+	proto.RegisterType((*PullServiceConfigReq)(nil), "protocol.PullServiceConfigReq")
+	proto.RegisterType((*PullServiceConfigRsp)(nil), "protocol.PullServiceConfigRsp")
 	proto.RegisterEnum("protocol.MsgTypeId", MsgTypeId_name, MsgTypeId_value)
 }
 
-func init() { proto.RegisterFile("agent.proto", fileDescriptor_agent_007ec2824bab5881) }
+func init() { proto.RegisterFile("agent.proto", fileDescriptor_agent_af89246131cb6230) }
 
-var fileDescriptor_agent_007ec2824bab5881 = []byte{
-	// 318 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0x8c, 0x91, 0xdb, 0x4a, 0xc3, 0x40,
-	0x10, 0x86, 0x49, 0xd2, 0x53, 0xa6, 0x87, 0x5d, 0x57, 0x84, 0x80, 0x20, 0xa5, 0x57, 0xa5, 0xa2,
-	0x88, 0x6f, 0xe0, 0x01, 0x64, 0x2f, 0x2a, 0x52, 0xd4, 0xfb, 0xd0, 0x19, 0xa3, 0x74, 0x9b, 0x5d,
-	0xb3, 0x69, 0x4b, 0x1f, 0xd3, 0x37, 0x92, 0x4d, 0x2f, 0xda, 0x2e, 0x16, 0x7b, 0x15, 0xf2, 0xcd,
-	0x3f, 0xff, 0xce, 0xfc, 0x03, 0xed, 0x34, 0xa3, 0xbc, 0xbc, 0x36, 0x85, 0x2e, 0xb5, 0x68, 0x55,
-	0x9f, 0xa9, 0x56, 0x83, 0x73, 0xe8, 0x3c, 0x51, 0xf9, 0xa0, 0xf3, 0x8f, 0xaf, 0x6c, 0x42, 0xdf,
-	0xa2, 0x0d, 0xd1, 0x8c, 0xd6, 0x49, 0xd0, 0x0f, 0x87, 0xf1, 0x60, 0xb4, 0x5b, 0xb4, 0x66, 0xaf,
-	0x28, 0xba, 0x50, 0x5f, 0xa6, 0x6a, 0x41, 0x49, 0x58, 0x69, 0x2f, 0xa1, 0xfb, 0xb2, 0xb0, 0x9f,
-	0x7f, 0x3b, 0xf9, 0xe2, 0x0b, 0x60, 0x13, 0x9a, 0xeb, 0x25, 0x1d, 0x78, 0xf8, 0xca, 0x99, 0x29,
-	0xb5, 0xad, 0x76, 0xa0, 0x36, 0xa3, 0xb5, 0x4d, 0x82, 0x7e, 0x34, 0x8c, 0x45, 0x0f, 0x1a, 0x95,
-	0x9b, 0x4d, 0x42, 0xf7, 0xef, 0xc9, 0xad, 0xf9, 0x57, 0xce, 0xee, 0x10, 0x9f, 0x69, 0x75, 0xdc,
-	0xb0, 0xf7, 0xc0, 0xde, 0x0c, 0xa6, 0xe5, 0x81, 0x61, 0x05, 0x87, 0x96, 0x56, 0xf8, 0xbe, 0xed,
-	0x70, 0x24, 0xa7, 0xd5, 0x86, 0x44, 0x95, 0xc7, 0x0d, 0xb0, 0x47, 0x52, 0x74, 0xbc, 0xc7, 0xe0,
-	0x16, 0xd8, 0x38, 0xcd, 0xd3, 0x8c, 0xb6, 0x5b, 0x31, 0x68, 0x16, 0x54, 0x4e, 0x35, 0x52, 0xd5,
-	0x55, 0x77, 0x8b, 0x51, 0x51, 0xcc, 0x6d, 0x96, 0x84, 0xfd, 0x60, 0x18, 0x8f, 0x7e, 0x02, 0x88,
-	0xc7, 0x36, 0x7b, 0x5d, 0x1b, 0x92, 0x28, 0x04, 0xf4, 0x76, 0x4f, 0x2b, 0x91, 0x07, 0xe2, 0x0c,
-	0x4e, 0xbc, 0xe0, 0x25, 0xf2, 0x50, 0x9c, 0x02, 0xdb, 0xcb, 0x5b, 0x22, 0x8f, 0x3c, 0x68, 0x8d,
-	0x44, 0x5e, 0xdb, 0xc0, 0x9d, 0x33, 0x4b, 0xe4, 0x75, 0xe7, 0xea, 0x05, 0x2a, 0x91, 0x37, 0x1c,
-	0xf6, 0x82, 0x93, 0xc8, 0x9b, 0x0e, 0x7b, 0x59, 0x48, 0xe4, 0x2d, 0x87, 0xbd, 0x85, 0x25, 0xf2,
-	0xf8, 0x37, 0x00, 0x00, 0xff, 0xff, 0x84, 0x4b, 0x6d, 0x0d, 0xb8, 0x02, 0x00, 0x00,
+var fileDescriptor_agent_af89246131cb6230 = []byte{
+	// 322 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0x9c, 0x52, 0xc1, 0x4e, 0xc2, 0x40,
+	0x10, 0x0d, 0x2d, 0x20, 0x1d, 0x2a, 0x2e, 0x03, 0x68, 0xf5, 0x44, 0xf6, 0x84, 0x1c, 0xf4, 0xe4,
+	0xd5, 0x04, 0xe5, 0xe0, 0xc6, 0x98, 0x18, 0xc0, 0x0f, 0x80, 0xce, 0x48, 0x08, 0x0d, 0x5b, 0xbb,
+	0x40, 0xd2, 0xff, 0xf5, 0x43, 0x4c, 0xd7, 0x84, 0x10, 0x28, 0xa6, 0xf1, 0xb4, 0x99, 0xdd, 0x37,
+	0x6f, 0xde, 0xbe, 0x37, 0x50, 0x9f, 0xce, 0x79, 0xb5, 0xbe, 0x8b, 0x13, 0xbd, 0xd6, 0x58, 0xb3,
+	0x47, 0xa8, 0x23, 0x29, 0xc1, 0x1f, 0x6f, 0x66, 0x26, 0x4c, 0x16, 0x33, 0x1e, 0xf1, 0x17, 0x22,
+	0x80, 0xe1, 0x64, 0xbb, 0x08, 0xf9, 0x95, 0xd3, 0xa0, 0xd4, 0x75, 0x7a, 0x9e, 0x9c, 0x00, 0xee,
+	0x30, 0x4f, 0x89, 0x5e, 0x72, 0x32, 0x32, 0x71, 0x1e, 0x12, 0x7d, 0x28, 0x87, 0x9a, 0x38, 0x70,
+	0xba, 0x4e, 0xaf, 0x92, 0x55, 0x4b, 0x4e, 0x4d, 0xe0, 0x76, 0xdd, 0x9e, 0x87, 0x0d, 0xa8, 0x6e,
+	0xa7, 0xd1, 0x86, 0x4d, 0x50, 0xce, 0x6a, 0xf9, 0x00, 0xcd, 0x1d, 0xeb, 0x20, 0xd3, 0x56, 0x88,
+	0x54, 0x3e, 0x82, 0x3f, 0x20, 0x7a, 0xd6, 0xab, 0xcf, 0xc5, 0xfc, 0x84, 0x60, 0xac, 0x83, 0xbb,
+	0xe4, 0xd4, 0x36, 0x78, 0x78, 0x0e, 0x15, 0x3b, 0x37, 0x70, 0xed, 0x67, 0xee, 0xc1, 0x1f, 0x72,
+	0x54, 0xbc, 0x5f, 0xde, 0x42, 0x6b, 0xc8, 0xd1, 0xf8, 0x17, 0xf3, 0x67, 0x9f, 0x1c, 0xc0, 0xc5,
+	0x47, 0x4c, 0xd3, 0x35, 0xff, 0x5f, 0x5e, 0x1f, 0xda, 0xef, 0x9b, 0xa8, 0xd8, 0xb8, 0x97, 0x3c,
+	0xec, 0x69, 0x13, 0x6d, 0x16, 0xce, 0x41, 0x16, 0x36, 0x9b, 0xfe, 0x77, 0x09, 0xbc, 0x37, 0x33,
+	0x9f, 0xa4, 0x31, 0x2b, 0x42, 0x84, 0xc6, 0xfe, 0x4e, 0x28, 0x12, 0x25, 0x0c, 0xa0, 0x7d, 0xbc,
+	0x03, 0x8a, 0x84, 0x83, 0x57, 0xd0, 0x3a, 0xca, 0x51, 0x91, 0x70, 0x33, 0x9a, 0xfd, 0xa4, 0x14,
+	0x89, 0x72, 0x76, 0xb7, 0xef, 0xbe, 0x22, 0x51, 0xc1, 0x6b, 0xe8, 0xe4, 0x18, 0xac, 0x48, 0x54,
+	0xb1, 0x03, 0xcd, 0x03, 0x43, 0x15, 0x89, 0x33, 0xbc, 0x81, 0xcb, 0x3c, 0x93, 0x14, 0x89, 0x5a,
+	0xfe, 0x9b, 0x55, 0xe4, 0xfd, 0x04, 0x00, 0x00, 0xff, 0xff, 0x1d, 0xdd, 0xfe, 0x38, 0x04, 0x03,
+	0x00, 0x00,
 }

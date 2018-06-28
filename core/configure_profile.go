@@ -6,11 +6,12 @@ import (
 	"unsafe"
 	"errors"
 	"github.com/gwenn/murmurhash3"
+	"sync"
 )
 
 const (
-	FiledNumber uint = 5
-	//产品线名.业务组名.服务名.所需section.配置key, 其中“产品线名.业务组名.服务名”组成serviceId用于标识一个服务
+	FieldNumber = 5
+	//产品线名.业务组名.服务名.所需section.配置key, 其中“产品线名.业务组名.服务名”组成serviceKey用于标识一个服务
 	//每个字段不得超过30字节
 	KeyCap uint = 155
 	ValueCap uint = 35
@@ -32,7 +33,12 @@ const (
 type ConfigController struct {
 	shm *SharedMem
 	buckets *[BucketCap][BucketSize]byte
-	locks [BucketCap]*WrFlock
+	locks [BucketCap]*WrFlock//管理buckets
+	totalConfigs map[string]map[string]string//将配置也用map形式存在agent自己的内存上，方便更新时对比
+	//格式：
+	//serviceKey1: configKey1:configValue1, configKey2:configValue2...
+	//serviceKey2: configKey1:configValue1, configKey2:configValue2...
+	mutex sync.Mutex//保护map形式的配置
 }
 
 //创建一个配合控制
@@ -52,6 +58,7 @@ func GetConfigController() (*ConfigController, error) {
 		}
 	}
 	configController := ConfigController {}
+	//先确定是否本机仅有一个controller
 	//获取文件锁
 	for i := uint(0);i < BucketCap; i++ {
 		flockPath := fmt.Sprintf("%s/flock_%d.flk", RootPath, i)
@@ -78,7 +85,29 @@ func GetConfigController() (*ConfigController, error) {
 	configController.shm = m
 	//读取共享内存，转化为数组
 	configController.buckets = (*[BucketCap][BucketSize]byte)(unsafe.Pointer(&m.bs[0]))
+	//已创建成功
+	//加载所有配置项到agent内存里，方便以后更新使用
+	configController.loadAll()
 	return &configController, nil
+}
+
+//加载所有配置项到agent内存里，方便以后更新使用
+//仅在启动时执行
+func (cc *ConfigController) loadAll() {
+	cc.totalConfigs = make(map[string]map[string]string)
+	for idx := uint(0);idx < BucketCap; idx++ {
+		cc.locks[idx].RDLock()
+		bucketTotalConfigs := getBucketTotalConfigs(&cc.buckets[idx])
+		cc.locks[idx].Release()
+		for key, value := range bucketTotalConfigs {
+			serviceKey := GetServiceKey(key)
+			configKey := GetConfigKey(key)
+			if _, ok := cc.totalConfigs[serviceKey];!ok {
+				cc.totalConfigs[serviceKey] = make(map[string]string)
+			}
+			cc.totalConfigs[serviceKey][configKey] = value
+		}
+	}
 }
 
 //清理
@@ -91,10 +120,30 @@ func (cc *ConfigController) Close() {
 	}
 }
 
-//写配置
-func (cc *ConfigController) Set(key string, value string) error {
-	//check empty item
-	if key == "" || value == "" {
+//获取当前所有serviceKey
+func (cc *ConfigController) GetAllServiceKeys() map[string]bool {
+	cc.mutex.Lock()
+	defer cc.mutex.Unlock()
+	result := make(map[string]bool)
+	for key := range cc.totalConfigs {
+		result[key] = true
+	}
+	return result
+}
+
+//某serviceKey是否存在
+func (cc *ConfigController) ExistService(serviceKey string) bool {
+	cc.mutex.Lock()
+	defer cc.mutex.Unlock()
+	_, ok := cc.totalConfigs[serviceKey]
+	return ok
+}
+
+//写配置：新增、修改
+func (cc *ConfigController) Set(serviceKey string, configKey string, value string) error {
+	key := SpliceKey(serviceKey, configKey)
+	//check valid item
+	if !IsValidityKey(key) || value == "" {
 		return errors.New("empty key/value")
 	}
 	keyLen := len(key)
@@ -119,16 +168,23 @@ func (cc *ConfigController) Set(key string, value string) error {
 		ret = setConfig(cc.buckets, BucketCap - 1, key, value)
 		if ret == -1 {
 			return errors.New("configure hub is full")
-		} else {
-			return nil
 		}
 	}
+	//同时更新本地map配置
+	cc.mutex.Lock()
+	defer cc.mutex.Unlock()
+	if _, ok := cc.totalConfigs[serviceKey];!ok {
+		cc.totalConfigs[serviceKey] = make(map[string]string)
+	}
+	cc.totalConfigs[serviceKey][configKey] = value
 	return nil
 }
 
-//删除配置
-func (cc *ConfigController) Remove(key string) {
-	if key == "" {
+//删除一个配置
+func (cc *ConfigController) RemoveOne(serviceKey string, configKey string) {
+	key := SpliceKey(serviceKey, configKey)
+	//check valid item
+	if !IsValidityKey(key) {
 		return
 	}
 	buckIndex := uint(murmurhash3.Murmur3A([]byte(key), 0)) % (BucketCap - 1)
@@ -140,8 +196,86 @@ func (cc *ConfigController) Remove(key string) {
 		//对应bucket不存在此项
 		//则尝试在最后一个bucket中删除此项
 		cc.locks[BucketCap - 1].WRLock()
-		defer cc.locks[BucketCap - 1].Release()
 		_ = removeConfig(cc.buckets, BucketCap - 1, key)
+		cc.locks[BucketCap - 1].Release()
+
+		//顺便在map配置里删除之
+		cc.mutex.Lock()
+		defer cc.mutex.Unlock()
+		if _, ok := cc.totalConfigs[serviceKey];ok {
+			delete(cc.totalConfigs[serviceKey], configKey)
+			if len(cc.totalConfigs[serviceKey]) == 0 {
+				delete(cc.totalConfigs, serviceKey)
+			}
+		}
+	}
+}
+
+//删除一个service的配置
+func (cc *ConfigController) Remove(serviceKey string) {
+	cc.mutex.Lock()
+	serviceConfigs, ok := cc.totalConfigs[serviceKey]
+	if !ok {
+		//压根不存在
+		cc.mutex.Unlock()
+		return
+	}
+	//在map配置中删除
+	delete(cc.totalConfigs, serviceKey)
+	cc.mutex.Unlock()
+
+	//在共享内存中删除
+	for configKey := range serviceConfigs {
+		key := SpliceKey(serviceKey, configKey)
+		buckIndex := uint(murmurhash3.Murmur3A([]byte(key), 0)) % (BucketCap - 1)
+		//上互斥锁
+		cc.locks[buckIndex].WRLock()
+		ret := removeConfig(cc.buckets, buckIndex, key)
+		cc.locks[buckIndex].Release()
+		if ret == -1 {
+			//对应bucket不存在此项
+			//则尝试在最后一个bucket中删除此项
+			cc.locks[BucketCap - 1].WRLock()
+			_ = removeConfig(cc.buckets, BucketCap - 1, key)
+			cc.locks[BucketCap - 1].Release()
+		}
+	}
+}
+
+//更新一个service的配置
+func (cc *ConfigController) UpdateService(serviceKey string, configKeys []string, values []string) {
+	if len(configKeys) != len(values) {
+		return
+	}
+	//remote config
+	remoteServiceConfigs := make(map[string]string)
+	for i := range configKeys {
+		remoteServiceConfigs[configKeys[i]] = values[i]
+	}
+	cc.mutex.Lock()
+	serviceConfigs, ok := cc.totalConfigs[serviceKey]
+	if !ok {
+		//压根不存在
+		cc.mutex.Unlock()
+		return
+	}
+	cc.mutex.Unlock()
+	//获取哪些需要新增、更新
+	for key, value := range remoteServiceConfigs {
+		if _, ok := serviceConfigs[key];!ok {
+			//是新配置，添加
+			cc.Set(serviceKey, key, value)
+		} else if serviceConfigs[key] != value {
+			//是更新的值，更新
+			cc.Set(serviceKey, key, value)
+		}
+	}
+	//哪些需要删除
+	for key := range serviceConfigs {
+		if _, ok := remoteServiceConfigs[key];!ok {
+			//被删除了
+			cc.RemoveOne(serviceKey, key)
+		}
 	}
 }
 
@@ -168,13 +302,6 @@ func (cc *ConfigController) Get(key string) (string, error) {
 		}
 	}
 	return value, nil
-}
-
-//获取一个bucket所有配置
-func (cc *ConfigController) GetAll(idx uint) map[string]string {
-	cc.locks[idx].RDLock()
-	defer cc.locks[idx].Release()
-	return getBucketConfigs(&cc.buckets[idx])
 }
 
 //配置总数

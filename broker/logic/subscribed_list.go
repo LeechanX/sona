@@ -5,16 +5,16 @@ import "sync"
 //被订阅列表结构
 type SubscribedList struct {
 	rwLock sync.RWMutex
-	//ket -> a set of Connections
+	//serviceKey -> a set of Connections
 	list map[string]map[*Connection]bool
 }
 
 //key被连接c所订阅
-func (sl *SubscribedList) Subscribed(key string, c* Connection) {
+func (sl *SubscribedList) Subscribed(serviceKey string, c* Connection) {
 	sl.rwLock.Lock()//写锁
 	defer sl.rwLock.Unlock()
 
-	sl.list[key][c] = true
+	sl.list[serviceKey][c] = true
 }
 
 func (sl *SubscribedList) RemoveKey(key string) {
