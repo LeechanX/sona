@@ -68,7 +68,6 @@ func DecodeTCPMessage(conn *net.TCPConn) (MsgTypeId, []byte, error) {
 	//https://www.cnblogs.com/ghj1976/p/3435940.html
 	//tcpConn.Read和io.ReadFull的区别，很关键
 	//先读取包头
-	//TODO: 设置超时
 	_, err := io.ReadFull(conn, data[:HeadBytes])
 	if err != nil {
 		return MsgTypeId(0), nil, err

@@ -16,6 +16,20 @@ func IsValidityKey(key string) bool {
     return true
 }
 
+func IsValidityServiceKey(key string) bool {
+    //prductionname.groupname.servicename
+    s := strings.Split(key, ".")
+    if len(s) != FieldNumber - 2 {
+        return false
+    }
+    for _, field := range s {
+        if field == "" {
+            return false
+        }
+    }
+    return true
+}
+
 //splice total key
 func SpliceKey(serviceKey string, configKey string) string {
     return serviceKey + "." + configKey
