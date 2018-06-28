@@ -39,6 +39,8 @@ type ConfigController struct {
 	//serviceKey1: configKey1:configValue1, configKey2:configValue2...
 	//serviceKey2: configKey1:configValue1, configKey2:configValue2...
 	mutex sync.Mutex//保护map形式的配置
+
+	gLock *WrFlock//用于确保只有一个agent在本机运行
 }
 
 //创建一个配合控制
@@ -59,6 +61,18 @@ func GetConfigController() (*ConfigController, error) {
 	}
 	configController := ConfigController {}
 	//先确定是否本机仅有一个controller
+	flockPath := fmt.Sprintf("%s/global_flock.flk", RootPath)
+	gfl, err := getWrFlock(flockPath)
+	if err != nil {
+		return nil, err
+	}
+	if err = gfl.WRLockNoWait();err != nil {
+		//说明已有agent进程存在了
+		return nil, err
+	}
+	//agent运行期间，将一直对global_flock.flk上互斥锁
+	configController.gLock = gfl
+
 	//获取文件锁
 	for i := uint(0);i < BucketCap; i++ {
 		flockPath := fmt.Sprintf("%s/flock_%d.flk", RootPath, i)
@@ -118,6 +132,8 @@ func (cc *ConfigController) Close() {
 	for i := uint(0);i < BucketCap; i++ {
 		cc.locks[i].Close()
 	}
+	cc.gLock.Release()
+	cc.gLock.Close()
 }
 
 //获取当前所有serviceKey
