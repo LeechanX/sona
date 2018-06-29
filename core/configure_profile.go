@@ -214,15 +214,14 @@ func (cc *ConfigController) RemoveOne(serviceKey string, configKey string) {
 		cc.locks[BucketCap - 1].WRLock()
 		_ = removeConfig(cc.buckets, BucketCap - 1, key)
 		cc.locks[BucketCap - 1].Release()
-
-		//顺便在map配置里删除之
-		cc.mutex.Lock()
-		defer cc.mutex.Unlock()
-		if _, ok := cc.totalConfigs[serviceKey];ok {
-			delete(cc.totalConfigs[serviceKey], configKey)
-			if len(cc.totalConfigs[serviceKey]) == 0 {
-				delete(cc.totalConfigs, serviceKey)
-			}
+	}
+	//顺便在map配置里删除之
+	cc.mutex.Lock()
+	defer cc.mutex.Unlock()
+	if _, ok := cc.totalConfigs[serviceKey];ok {
+		delete(cc.totalConfigs[serviceKey], configKey)
+		if len(cc.totalConfigs[serviceKey]) == 0 {
+			delete(cc.totalConfigs, serviceKey)
 		}
 	}
 }
