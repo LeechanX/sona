@@ -6,6 +6,7 @@ import (
 	"sync/atomic"
 	"easyconfig/protocol"
 	"github.com/golang/protobuf/proto"
+	"time"
 )
 
 const (
@@ -29,9 +30,9 @@ func CreateConnection(c *net.TCPConn) {
 	}
 	atomic.AddInt32(&numberOfConnections, 1)
 	//启动发送G
-	go sender(&connection)
+	go connection.sender()
 	//启动接收G
-	go receiver(&connection)
+	go connection.receiver()
 }
 
 //订阅
@@ -69,75 +70,89 @@ func (c *Connection) Close() {
 	atomic.AddInt32(&numberOfConnections, -1)
 }
 
-//推送被修改的配置
-func (c *Connection) PushUpdatedData(key string, value string) {
+//推送新增的、被修改的配置
+func (c *Connection) PushAddOrUpdated(serviceKey string, confKey string, value string) {
 	if !c.IsClosed() {
-		c.sendQueue<- &protocol.PushConfigReq{
-			Key:&key,
+		c.sendQueue<- &protocol.AddConfigReq{
+			ServiceKey:&serviceKey,
+			Key:&confKey,
 			Value:&value,
 		}
 	}
 }
 
 //推送被删除的配置
-func (c *Connection) PushDeletedData(key string) {
+func (c *Connection) PushDeleted(serviceKey string, confKey string) {
 	if !c.IsClosed() {
-		c.sendQueue<- &protocol.RemoveConfigReq{
-			Key:&key,
+		c.sendQueue<- &protocol.DelConfigReq{
+			ServiceKey:&serviceKey,
+			Key:&confKey,
 		}
 	}
 }
 
 //接收消息的goroutine
-func receiver(c *Connection) {
+func (c *Connection) receiver() {
 	//可能是网络出错，于是调用CloseConnect会主动关闭连接
 	//也可能是其他G关闭了连接，这时调用Close将什么也不干
 	defer c.Close()
-
 	for {
 		cmdId, pbData, err := protocol.DecodeTCPMessage(c.conn)
 		if err != nil {
 			log.Panicf("%s\n", err)
 			return
 		}
-		if cmdId == protocol.MsgTypeId_PullConfigReqId {
+		if cmdId == protocol.MsgTypeId_SubscribeReqId {
+			//agent来订阅配置
+			req := protocol.SubscribeReq{}
+			if err := proto.Unmarshal(pbData, &req);err != nil {
+				log.Panicf("receive from agent data format error: %s\n", err)
+				return
+			}
+			rsp := protocol.SubscribeBrokerRsp{}
+			rsp.ServiceKey = req.ServiceKey
+			//查看是否有此配置
+			configs := ConfigData.IsServiceKeyExist(*req.ServiceKey)
+			if configs == nil {
+				//订阅失败
+				*rsp.Code = -1
+			} else {
+				//订阅成功
+				*rsp.Code = 0
+				//填充配置
+				for key, value := range configs {
+					rsp.Keys = append(rsp.Keys, key)
+					rsp.Values = append(rsp.Values, value)
+				}
+			}
+			if !c.IsClosed() {
+				//告知sender G
+				c.sendQueue<- &rsp
+			}
+		}
+		if cmdId == protocol.MsgTypeId_PullServiceConfigReqId {
 			//agent向broker获取路由
-			req := protocol.PullConfigReq{}
+			req := protocol.PullServiceConfigReq{}
 			err := proto.Unmarshal(pbData, &req)
 			if err != nil {
 				log.Panicf("receive from agent data format error: %s\n", err)
 				return
 			}
-			//更新订阅列表、被订阅列表
-			for _, key := range req.Keys {
-				if c.Subscript(key) {
-					//订阅成功
-					Subscribed.Subscribed(key, c)
-				}
-			}
-
-			rsp := protocol.PullConfigRsp{}
-			var changed bool
-			//从数据中查看配置信息
-			for idx, key := range req.Keys {
-				agentValue := req.Values[idx]
-				localValue := ConfigData.GetData(key)
-				if agentValue != localValue {
-					changed = true
-					//值有变化（含本地不存在的情况），回复
+			rsp := protocol.PullServiceConfigRsp{}
+			rsp.ServiceKey = req.ServiceKey
+			//查看是否有此配置
+			configs := ConfigData.IsServiceKeyExist(*req.ServiceKey)
+			if configs != nil {
+				//填充配置
+				for key, value := range configs {
 					rsp.Keys = append(rsp.Keys, key)
-					rsp.Values = append(rsp.Values, localValue)
+					rsp.Values = append(rsp.Values, value)
 				}
 			}
-			if changed && !c.IsClosed() {
+			if !c.IsClosed() {
 				//告知sender G
 				c.sendQueue<- &rsp
 			}
-		} else if cmdId == protocol.MsgTypeId_SubscribeReqId {
-			//agent向broker订阅配置
-			//注册订阅关系
-
-			//如果已有此配置，则回复内容
 		} else {
 			log.Printf("unknown request cmd id: %d\n", cmdId)
 		}
@@ -145,7 +160,7 @@ func receiver(c *Connection) {
 }
 
 //发送消息的goroutine
-func sender(c *Connection) {
+func (c *Connection) sender() {
 	//可能是网络出错，于是调用CloseConnect会主动关闭连接
 	//也可能是其他G关闭了连接，这时调用CloseConnect将什么也不干
 	defer c.Close()
@@ -161,20 +176,21 @@ func sender(c *Connection) {
 			}
 			var cmdId protocol.MsgTypeId
 			switch req.(type) {
-			case protocol.PullConfigRsp:
-				//回复包
-				cmdId = protocol.MsgTypeId_PullConfigRspId
-			case protocol.RemoveConfigReq:
-				//发起删除命令
-				cmdId = protocol.MsgTypeId_RemoveConfigReqId
-			case protocol.PushConfigReq:
-				//推送配置
-				cmdId = protocol.MsgTypeId_PushConfigReqId
+			case protocol.AddConfigReq:
+				//推送新的、更新的配置
+				cmdId = protocol.MsgTypeId_AddConfigReqId
+			case protocol.DelConfigReq:
+				//推送删除配置
+				cmdId = protocol.MsgTypeId_DelConfigReqId
+			case protocol.PullServiceConfigRsp:
+				//回复拉取配置
+				cmdId = protocol.MsgTypeId_PullServiceConfigRspId
 			default:
 				return
 			}
 
 			data := protocol.EncodeMessage(cmdId, req)
+			c.conn.SetWriteDeadline(time.Now().Add(100 * time.Millisecond))
 			if _, err := c.conn.Write(data);err != nil {
 				return
 			}

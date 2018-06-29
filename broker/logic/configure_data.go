@@ -10,75 +10,74 @@ import (
 //var DataMap sync.Map
 
 type ConfiguresData struct {
-	data map[string]string
+	//格式：
+	//serviceKey1: configKey1:configValue1, configKey2:configValue2...
+	//serviceKey2: configKey1:configValue1, configKey2:configValue2...
+	data map[string]map[string]string
 	rwMutex sync.RWMutex
 }
 
+//全局配置
 var ConfigData ConfiguresData
 
 //cas方式新增、修改配置
-func (cfd *ConfiguresData) AddOrUpdateData(key string, oldValue string, newValue string) error {
+//返回值：bool表示是否需要推送
+func (cfd *ConfiguresData) AddOrUpdateData(serviceKey string, configKey string, oldValue string, newValue string) (bool, error) {
 	cfd.rwMutex.Lock()
-
-	//是否需要push
+	defer cfd.rwMutex.Unlock()
 	var needPush bool
-	value, ok := cfd.data[key]
-	if oldValue == value {
-		//可以设置
-		cfd.data[key] = newValue
-		//是修改，需要下发
-		if ok {
-			needPush = true
+	if _, ok := cfd.data[serviceKey];!ok {
+		//不存在，添加serviceKey
+		cfd.data[serviceKey] = make(map[string]string)
+		//检查CAS
+		if oldValue != "" {
+			return false, errors.New("please retry, cas wrong")
 		}
-		cfd.rwMutex.Unlock()
+		//新创建的serviceKey，所以不需要推送，不可能有人已订阅
 	} else {
-		//值不同，不可下发
-		cfd.rwMutex.Unlock()
-		return errors.New("please retry, cas wrong")
-	}
-
-	if needPush {
-		//获取目标agent
-		targets := Subscribed.GetSubscribers(key)
-		for _, target := range targets {
-			target.PushUpdatedData(key, value)
+		originValue := cfd.data[serviceKey][configKey]
+		//检查CAS
+		if oldValue != originValue {
+			return false, errors.New("please retry, cas wrong")
 		}
+		needPush = true
 	}
-	return nil
+	//添加，需要push
+	cfd.data[serviceKey][configKey] = newValue
+	return needPush, nil
 }
 
-//cas方式删除配置，需要Push
-func (cfd *ConfiguresData) DeleteData(key string, oldValue string) error {
+//cas方式删除配置项，必须要重推
+func (cfd *ConfiguresData) DeleteData(serviceKey string, configKey string, oldValue string) error {
 	cfd.rwMutex.Lock()
-
-	value, ok := cfd.data[key]
-	if !ok {
-		cfd.rwMutex.Unlock()
-		return errors.New("no exist")
+	defer cfd.rwMutex.Unlock()
+	var err error = nil
+	if _, ok := cfd.data[serviceKey];ok {
+		if originValue, ok := cfd.data[serviceKey][configKey];ok {
+			//检查cas
+			if originValue != oldValue {
+				err = errors.New("please retry, cas wrong")
+			}
+		}
 	}
-	if value != oldValue {
-		cfd.rwMutex.Unlock()
-		return errors.New("please retry, cas wrong")
-	}
-	delete(cfd.data, key)
-	cfd.rwMutex.Unlock()
-
-	//获取目标agent
-	targets := Subscribed.GetSubscribers(key)
-	//删除key
-	Subscribed.RemoveKey(key)
-	for _, target := range targets {
-		target.PushDeletedData(key)
-	}
-	return nil
+	return err
 }
 
 //获取配置
-func (cfd *ConfiguresData) GetData(key string) string {
+func (cfd *ConfiguresData) GetData(serviceKey string, configKey string) string {
 	cfd.rwMutex.RLock()
 	defer cfd.rwMutex.RUnlock()
-	if value, ok := cfd.data[key];ok {
-		return value
+	if _, ok := cfd.data[serviceKey];ok {
+		if value, ok := cfd.data[serviceKey][configKey];ok {
+			return value
+		}
 	}
 	return ""
+}
+
+//查看是否存在serviceKey
+func (cfd *ConfiguresData) IsServiceKeyExist(serviceKey string) map[string]string {
+	cfd.rwMutex.RLock()
+	defer cfd.rwMutex.RUnlock()
+	return cfd.data[serviceKey]
 }
