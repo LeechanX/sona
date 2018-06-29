@@ -86,6 +86,8 @@ func main() {
 			continue
 		}
 		//连接已建立
+		//立刻重拉，以便告知broker 自己订阅了哪些serviceKey
+		go logic.PullWhenStart(controller, brokerConnector)
 		//创建2个协程
 		//协程4：向broker拉取配置
 		brokerConnector.Wg.Add(1)
