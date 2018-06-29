@@ -1,12 +1,12 @@
 package protocol;
 
 enum MsgTypeId {
-    SubscribeReqId        = 1;//client向agent发起订阅请求,agent向broker发起订阅请求
-    SubscribeBrokerRspId  = 2;//broker向agent回复订阅请求
-    SubscribeAgentRspId   = 3;//agent向client回复订阅请求
-    AddConfigReqId        = 4;//broker向client推送添加一个配置项命令
-    DelConfigReqId        = 5;//broker向client发起删除一个配置项命令
-    UpdateConfigReqId     = 6;//broker向client发起更新一个配置项的命令
+    SubscribeReqId         = 1;//client向agent发起订阅请求,agent向broker发起订阅请求
+    SubscribeBrokerRspId   = 2;//broker向agent回复订阅请求
+    SubscribeAgentRspId    = 3;//agent向client回复订阅请求
+    AddConfigReqId         = 4;//broker向client推送添加一个配置项命令
+    DelConfigReqId         = 5;//broker向client发起删除一个配置项命令
+    UpdateConfigReqId      = 6;//broker向client发起更新一个配置项的命令
     PullServiceConfigReqId = 7;//agent向broker拉取一个服务的最新配置
     PullServiceConfigRspId = 8;//broker回复agent一个服务的最新配置
 }

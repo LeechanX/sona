@@ -65,7 +65,6 @@ func DecodeUDPMessage(conn *net.UDPConn) (MsgTypeId, *net.UDPAddr, []byte, error
 
 func DecodeTCPMessage(conn *net.TCPConn) (MsgTypeId, []byte, error) {
 	data := make([]byte, TotalLengthLimit)
-	//https://www.cnblogs.com/ghj1976/p/3435940.html
 	//tcpConn.Read和io.ReadFull的区别，很关键
 	//先读取包头
 	_, err := io.ReadFull(conn, data[:HeadBytes])
