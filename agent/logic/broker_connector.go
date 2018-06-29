@@ -117,15 +117,6 @@ func (c *Connection) Receiving(controller *core.ConfigController, clientService 
 			}
 			//执行删除
 			controller.RemoveOne(*req.ServiceKey, *req.Key)
-		} else if cmdId == protocol.MsgTypeId_DelServiceConfigReqId {
-			//broker向client发起一个服务的全部删除配置项命令
-			req := protocol.DelServiceConfigReq{}
-			if err = proto.Unmarshal(pbData, &req);err != nil {
-				log.Printf("receive from broker data format error: %s\n", err)
-				return
-			}
-			//执行删除
-			controller.Remove(*req.ServiceKey)
 		} else if cmdId == protocol.MsgTypeId_UpdateConfigReqId {
 			//broker向client发起更新一个配置项的命令
 			req := protocol.UpdateConfigReq{}
