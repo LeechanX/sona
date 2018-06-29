@@ -3,10 +3,10 @@ package logic
 import (
 	"net"
 	"log"
+	"time"
 	"sync/atomic"
 	"easyconfig/protocol"
 	"github.com/golang/protobuf/proto"
-	"time"
 )
 
 const (
@@ -36,13 +36,8 @@ func CreateConnection(c *net.TCPConn) {
 }
 
 //订阅
-//true表示订阅成功，false表示之前已订阅
-func (c *Connection) Subscript(configKey string) bool {
-	if _, ok := c.subscriptList[configKey];ok {
-		return false
-	}
+func (c *Connection) Subscribe(configKey string) {
 	c.subscriptList[configKey] = true
-	return true
 }
 
 //连接是否存活
@@ -61,8 +56,8 @@ func (c *Connection) Close() {
 		return
 	}
 	//需要在被订阅列表里删除每个关联
-	for configKey := range c.subscriptList {
-		Subscribed.UnSubscribed(configKey, c)
+	for serviceKey := range c.subscriptList {
+		SubscribedBook.UnSubscribed(serviceKey, c)
 	}
 	//为防止写channel产生panic，不关闭channel，仅发nil
 	c.sendQueue<- nil
@@ -117,6 +112,10 @@ func (c *Connection) receiver() {
 				//订阅失败
 				*rsp.Code = -1
 			} else {
+				//记录：serviceKey被c连接所订阅
+				SubscribedBook.Subscribed(*req.ServiceKey, c)
+				//记录：c连接订阅了serviceKey
+				c.Subscribe(*req.ServiceKey)
 				//订阅成功
 				*rsp.Code = 0
 				//填充配置
@@ -143,6 +142,14 @@ func (c *Connection) receiver() {
 			//查看是否有此配置
 			configs := ConfigData.IsServiceKeyExist(*req.ServiceKey)
 			if configs != nil {
+				//有可能是连接建立后立刻来拉取的，主要意图是：
+				//1、告知broker：agent已订阅哪些service keys
+				//2、更新一下最新配置
+
+				//记录：serviceKey被c连接所订阅
+				SubscribedBook.Subscribed(*req.ServiceKey, c)
+				//记录：c连接订阅了serviceKey
+				c.Subscribe(*req.ServiceKey)
 				//填充配置
 				for key, value := range configs {
 					rsp.Keys = append(rsp.Keys, key)

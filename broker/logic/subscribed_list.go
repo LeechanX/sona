@@ -49,4 +49,4 @@ func (sl *SubscribedList) GetSubscribers(key string) []*Connection {
 }
 
 //被订阅列表
-var Subscribed SubscribedList
+var SubscribedBook SubscribedList
