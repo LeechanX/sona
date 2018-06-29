@@ -6,10 +6,9 @@ enum MsgTypeId {
     SubscribeAgentRspId   = 3;//agent向client回复订阅请求
     AddConfigReqId        = 4;//broker向client推送添加一个配置项命令
     DelConfigReqId        = 5;//broker向client发起删除一个配置项命令
-    DelServiceConfigReqId = 6;//broker向client发起一个服务的全部删除配置项命令
-    UpdateConfigReqId     = 7;//broker向client发起更新一个配置项的命令
-    PullServiceConfigReqId = 8;//agent向broker拉取一个服务的最新配置
-    PullServiceConfigRspId = 9;//broker回复agent一个服务的最新配置
+    UpdateConfigReqId     = 6;//broker向client发起更新一个配置项的命令
+    PullServiceConfigReqId = 7;//agent向broker拉取一个服务的最新配置
+    PullServiceConfigRspId = 8;//broker回复agent一个服务的最新配置
 }
 
 //client向agent发起订阅请求,agent向broker发起订阅请求
@@ -42,11 +41,6 @@ message AddConfigReq {
 message DelConfigReq {
     required string serviceKey = 1;
     required string key = 2;
-}
-
-//broker向client发起一个服务的全部删除配置项命令
-message DelServiceConfigReq {
-    required string serviceKey = 1;
 }
 
 //broker向client发起更新一个配置项的命令
