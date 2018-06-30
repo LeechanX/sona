@@ -57,6 +57,11 @@ func (cfd *ConfiguresData) DeleteData(serviceKey string, configKey string, oldVa
 			//检查cas
 			if originValue != oldValue {
 				err = errors.New("please retry, cas wrong")
+			} else {
+				delete(cfd.data[serviceKey], configKey)
+				if len(cfd.data[serviceKey]) == 0 {
+					delete(cfd.data, serviceKey)
+				}
 			}
 		}
 	}

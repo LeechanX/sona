@@ -17,12 +17,6 @@ func (sl *SubscribedList) Subscribed(serviceKey string, c* Connection) {
 	sl.list[serviceKey][c] = true
 }
 
-func (sl *SubscribedList) RemoveKey(key string) {
-	sl.rwLock.Lock()//写锁
-	defer sl.rwLock.Unlock()
-	delete(sl.list, key)
-}
-
 //连接c不再订阅key
 func (sl *SubscribedList) UnSubscribed(key string, c* Connection) {
 	sl.rwLock.Lock()//写锁
