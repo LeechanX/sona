@@ -1,16 +1,14 @@
 #### Easy Config
 
 easy config是一个go语言实现的高效、实时、高可用的分布式配置中心，支持（C/C++/Go/Java/Python）接口主流编程语言
- _________________________________
-|                                 |
-| ╔═╗┌─┐┌─┐┬ ┬   ╔═╗┌─┐┌┐┌┌─┐┬┌─┐ |
-| ║╣ ├─┤└─┐└┬┘───║  │ ││││├┤ ││ ┬ |
-| ╚═╝┴ ┴└─┘ ┴    ╚═╝└─┘┘└┘└  ┴└─┘ |
-|_________________________________|
 
-author by: leechanx
-contact: leechan8@outlook.com
-wechat: leechanx
+| ╔═╗┌─┐┌─┐┬ ┬   ╔═╗┌─┐┌┐┌┌─┐┬┌─┐ |<br/>
+| ║╣ ├─┤└─┐└┬┘───║  │ ││││├┤ ││ ┬ |<br/>
+| ╚═╝┴ ┴└─┘ ┴    ╚═╝└─┘┘└┘└  ┴└─┘ |<br/>
+
+author by: leechanx<br/>
+contact: leechan8@outlook.com<br/>
+wechat: leechanx<br/>
 
 #### 特点
 
