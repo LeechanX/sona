@@ -3,13 +3,16 @@ package main
 import (
 	"easyconfig/common"
 	"easyconfig/broker/logic"
+	"time"
 )
 
 func main() {
 	common.PrintLogo()
 	logic.LoadSelfConfig()
 	//启动broker server服务于agent
-	logic.BrokerService()
+	go logic.BrokerService()
 	//启动另一个服务，用于服务于管理端事务操作
-
+	go logic.AdminService()
+	//TODO 主G逻辑未决
+	time.Sleep(1000*time.Second)
 }

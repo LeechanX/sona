@@ -183,13 +183,13 @@ func (c *Connection) sender() {
 			}
 			var cmdId protocol.MsgTypeId
 			switch req.(type) {
-			case protocol.AddConfigReq:
+			case *protocol.AddConfigReq:
 				//推送新的、更新的配置
 				cmdId = protocol.MsgTypeId_AddConfigReqId
-			case protocol.DelConfigReq:
+			case *protocol.DelConfigReq:
 				//推送删除配置
 				cmdId = protocol.MsgTypeId_DelConfigReqId
-			case protocol.PullServiceConfigRsp:
+			case *protocol.PullServiceConfigRsp:
 				//回复拉取配置
 				cmdId = protocol.MsgTypeId_PullServiceConfigRspId
 			default:

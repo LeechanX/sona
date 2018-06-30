@@ -66,6 +66,7 @@ func AdminService() {
 		log.Fatalf("%s\n", err)
 		os.Exit(1)
 	}
+	log.Printf("create admin server(%s) successfully\n", fmt.Sprintf("0.0.0.0:%d", GConf.AdminPort))
 	defer listen.Close()
 
 	for {

@@ -17,7 +17,7 @@ type GlobalConf struct {
 var GConf GlobalConf
 
 func LoadSelfConfig() {
-	cfgPath := flag.String("conf", "conf/easy-config-agent.ini", "configure file path")
+	cfgPath := flag.String("conf", "conf/easy-config-broker.ini", "configure file path")
 	flag.Parse()
 	//加载配置文件
 	cfg, err := config.ReadDefault(*cfgPath)
