@@ -162,14 +162,14 @@ func (c *Connection) Pulling() {
 		}
 		var cmdId protocol.MsgTypeId
 		switch req.(type) {
-		case protocol.PullServiceConfigReq:
+		case *protocol.PullServiceConfigReq:
 			//要向broker拉取
 			cmdId = protocol.MsgTypeId_PullServiceConfigReqId
-		case protocol.SubscribeAgentRsp:
+		case *protocol.SubscribeAgentRsp:
 			//要向broker订阅
 			cmdId = protocol.MsgTypeId_SubscribeBrokerRspId
 		}
-		data := protocol.EncodeMessage(cmdId, &req)
+		data := protocol.EncodeMessage(cmdId, req)
 		//设置100ms的超时
 		c.conn.SetWriteDeadline(time.Now().Add(100 * time.Millisecond))
 		if _, err := c.conn.Write(data);err != nil {
