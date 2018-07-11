@@ -1,0 +1,58 @@
+package protocol;
+
+enum AdminMsgTypeId {
+    AdminAddConfigReqId = 21;//admin向broker发起新增命令
+    AdminAddConfigRspId = 22;//broker回复admin新增结果
+    AdminDelConfigReqId = 23;//admin向broker发起删除命令
+    AdminDelConfigRspId = 24;//broker回复admin删除命令
+    AdminUpdConfigReqId = 25;//admin向broker发起修改命令
+    AdminUpdConfigRspId = 26;//broker回复admin修改结果
+    AdminGetConfigReqId = 27;//admin向broker发起获取请求
+    AdminGetConfigRspId = 28;//admin向broker发起获取请求
+}
+
+message AdminAddConfigReq {
+    required string serviceKey = 1;
+    required string key = 2;
+    required string oldValue = 3;
+    required string newValue = 4;
+}
+
+message AdminAddConfigRsp {
+    required int32 code = 1;//0成功 -1失败
+    optional string errmsg = 2;
+}
+
+message AdminDelConfigReq {
+    required string serviceKey = 1;
+    required string key = 2;
+    required string oldValue = 3;
+}
+
+message AdminDelConfigRsp {
+    required int32 code = 1;//0成功 -1失败
+    optional string errmsg = 2;
+}
+
+message AdminUpdConfigReq {
+    required string serviceKey = 1;
+    required string key = 2;
+    required string oldValue = 3;
+    required string newValue = 4;
+}
+
+message AdminUpdConfigRsp {
+    required int32 code = 1;//0成功 -1失败
+    optional string errmsg = 2;
+}
+
+message AdminGetConfigReq {
+    required string serviceKey = 1;
+}
+
+message AdminGetConfigRsp {
+    required string serviceKey = 1;
+    required int32 code = 2;//0有 -1不存在
+    repeated string keys = 3;
+    repeated string values = 4;
+}

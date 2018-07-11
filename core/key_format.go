@@ -2,10 +2,10 @@ package core
 
 import "strings"
 
-func IsValidityKey(key string) bool {
-    //prductionname.groupname.servicename.section.key
+func IsValidityServiceKey(key string) bool {
+    //prductionname.groupname.servicename
     s := strings.Split(key, ".")
-    if len(s) != FieldNumber {
+    if len(s) != 3 {
         return false
     }
     for _, field := range s {
@@ -16,10 +16,10 @@ func IsValidityKey(key string) bool {
     return true
 }
 
-func IsValidityServiceKey(key string) bool {
-    //prductionname.groupname.servicename
+func IsValidityConfKey(key string) bool {
+    //section.key
     s := strings.Split(key, ".")
-    if len(s) != FieldNumber - 2 {
+    if len(s) != 2 {
         return false
     }
     for _, field := range s {
@@ -29,6 +29,7 @@ func IsValidityServiceKey(key string) bool {
     }
     return true
 }
+
 
 //splice total key
 func SpliceKey(serviceKey string, configKey string) string {
