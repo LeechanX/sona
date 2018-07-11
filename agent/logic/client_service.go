@@ -68,18 +68,18 @@ func (cs *ClientService) Receiver(record *AccessRecord, controller *core.ConfigC
                 continue
             }
             //如果agent不存在此serviceKey，那么去broker上尝试拉取
-			if !controller.IsServiceExist(*req.ServiceKey) {
-				//发送给拉取goroutine
-				if atomic.LoadInt32(&c.status) == kConnStatusDisconnected {
-					//确认与broker建立连接才发送
-					log.Println("Client Service Routine: try to send request to puller goroutine")
-					c.sendQueue<- &req
-					log.Println("Client Service Routine: send request to puller goroutine ok")
-				}
-			} else {
-				//否则更新本地时间戳
-				record.Record(*req.ServiceKey)
-			}
+            if !controller.IsServiceExist(*req.ServiceKey) {
+                //发送给拉取goroutine
+                if atomic.LoadInt32(&c.status) == kConnStatusDisconnected {
+                    //确认与broker建立连接才发送
+                    log.Println("Client Service Routine: try to send request to puller goroutine")
+                    c.sendQueue<- &req
+                    log.Println("Client Service Routine: send request to puller goroutine ok")
+                }
+            } else {
+                //否则更新本地时间戳
+                record.Record(*req.ServiceKey)
+            }
         } else if cmdId == protocol.MsgTypeId_SubscribeReqId {
             //client向agent订阅配置
             req := protocol.SubscribeReq{}

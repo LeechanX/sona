@@ -35,10 +35,10 @@ func main() {
 
     //创建时间戳管理
     allServiceKeysMap := controller.GetAllServiceKeys()
-	allServiceKeys := make([]string, 0)
+    allServiceKeys := make([]string, 0)
     for serviceKey := range allServiceKeysMap {
-		allServiceKeys = append(allServiceKeys, serviceKey)
-	}
+        allServiceKeys = append(allServiceKeys, serviceKey)
+    }
     record := logic.GetAccessRecord(allServiceKeys)
 
     //创建UDP服务器

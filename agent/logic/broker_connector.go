@@ -87,7 +87,7 @@ func (c *Connection) Receiving(controller *core.ConfigController, clientService 
                 return
             }
             if *req.Code == 0 {
-            	controller.UpdateService(*req.ServiceKey, uint(*req.Version), req.ConfKeys, req.Values)
+                controller.UpdateService(*req.ServiceKey, uint(*req.Version), req.ConfKeys, req.Values)
             } else {
                 //订阅失败，说明broker没有此配置，忽略操作
             }
@@ -127,9 +127,9 @@ func (c *Connection) Receiving(controller *core.ConfigController, clientService 
                 return
             }
             //执行更新
-			if err = controller.Set(*req.ServiceKey, *req.ConfKey, *req.Value, uint(*req.Version));err != nil {
-				log.Printf("Set get error: %s\n", err)
-			}
+            if err = controller.Set(*req.ServiceKey, *req.ConfKey, *req.Value, uint(*req.Version));err != nil {
+                log.Printf("Set get error: %s\n", err)
+            }
         } else if cmdId == protocol.MsgTypeId_PullServiceConfigRspId {
             //broker回复agent一个服务的最新配置
             req := protocol.PullServiceConfigRsp{}
