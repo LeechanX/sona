@@ -83,7 +83,7 @@ func (c *Connection) Receiving(controller *core.ConfigController, clientService 
             //broker回复agent的订阅请求
             req := protocol.SubscribeBrokerRsp{}
             if err = proto.Unmarshal(pbData, &req);err != nil {
-                log.Printf("receive from broker data format error: %s\n", err)
+                log.Printf("receive from broker SubscribeBrokerRsp data format error: %s\n", err)
                 return
             }
             if *req.Code == 0 {
@@ -99,42 +99,20 @@ func (c *Connection) Receiving(controller *core.ConfigController, clientService 
                 serviceKey:*req.ServiceKey,
                 code:*req.Code,
             }
-        } else if cmdId == protocol.MsgTypeId_AddConfigReqId {
-            //broker向agent发起添加配置命令
-            req := protocol.AddConfigReq{}
+        } else if cmdId == protocol.MsgTypeId_PushServiceConfigReqId {
+            //broker推送给agent某服务的最新配置
+            req := protocol.PushServiceConfigReq{}
             if err = proto.Unmarshal(pbData, &req);err != nil {
-                log.Printf("receive from broker data format error: %s\n", err)
-                return
-            }
-            //执行新增
-            if err = controller.Set(*req.ServiceKey, *req.ConfKey, *req.Value, uint(*req.Version));err != nil {
-                log.Printf("Set get error: %s\n", err)
-            }
-        } else if cmdId == protocol.MsgTypeId_DelConfigReqId {
-            //broker向client发起删除一个配置项命令
-            req := protocol.DelConfigReq{}
-            if err = proto.Unmarshal(pbData, &req);err != nil {
-                log.Printf("receive from broker data format error: %s\n", err)
-                return
-            }
-            //执行删除
-            controller.RemoveOne(*req.ServiceKey, *req.ConfKey, uint(*req.Version))
-        } else if cmdId == protocol.MsgTypeId_UpdateConfigReqId {
-            //broker向client发起更新一个配置项的命令
-            req := protocol.UpdateConfigReq{}
-            if err = proto.Unmarshal(pbData, &req);err != nil {
-                log.Printf("receive from broker data format error: %s\n", err)
+                log.Printf("receive from broker PushServiceConfigReq data format error: %s\n", err)
                 return
             }
             //执行更新
-            if err = controller.Set(*req.ServiceKey, *req.ConfKey, *req.Value, uint(*req.Version));err != nil {
-                log.Printf("Set get error: %s\n", err)
-            }
+            controller.UpdateService(*req.ServiceKey, uint(*req.Version), req.ConfKeys, req.Values)
         } else if cmdId == protocol.MsgTypeId_PullServiceConfigRspId {
             //broker回复agent一个服务的最新配置
             req := protocol.PullServiceConfigRsp{}
             if err = proto.Unmarshal(pbData, &req);err != nil {
-                log.Printf("receive from broker data format error: %s\n", err)
+                log.Printf("receive from broker PullServiceConfigRsp data format error: %s\n", err)
                 return
             }
             //执行更新

@@ -165,7 +165,7 @@ func (cc *ConfigController) addNewService(serviceKey string, remoteVersion uint,
     cc.indexLock.Release()
     return nil
 }
-
+/*
 //写配置：为某serviceKey新增一个、修改一个
 func (cc *ConfigController) Set(serviceKey string, configKey string, value string, remoteVersion uint) error {
     //先获取索引位置
@@ -187,7 +187,8 @@ func (cc *ConfigController) Set(serviceKey string, configKey string, value strin
     }
     return nil
 }
-
+*/
+/*
 //删除一个配置
 func (cc *ConfigController) RemoveOne(serviceKey string, configKey string, remoteVersion uint) {
     //先获取索引位置
@@ -215,17 +216,18 @@ func (cc *ConfigController) RemoveOne(serviceKey string, configKey string, remot
         UpdServiceVersion(cc.indexHub, serviceKey, remoteVersion)
     }
 }
+*/
 
 //删除某service的配置
 func (cc *ConfigController) RemoveService(serviceKey string) {
     //先获取索引位置
     cc.indexLock.WRLock()
     index, _ := GetServiceIndex(cc.indexHub, serviceKey)
-    if index == -1 {
+    if index != -1 {
         RemoveService(cc.indexHub, serviceKey)
     }
     cc.indexLock.Release()
-    if index == -1 {
+    if index != -1 {
         cc.confLocks[index].WRLock()
         RemoveServiceConf(cc.confHub, uint(index))
         cc.confLocks[index].Release()
@@ -244,6 +246,10 @@ func (cc *ConfigController) UpdateService(serviceKey string, remoteVersion uint,
     if remoteVersion <= localVersion {
         return errors.New(fmt.Sprintf("remote service %s configure is too old", serviceKey))
     }
+    //更新版本
+    cc.indexLock.WRLock()
+    UpdServiceVersion(cc.indexHub, serviceKey, remoteVersion)
+    cc.indexLock.Release()
     //先排序
     sortedKeys, sortedValues := common.SortKV(configKeys, values)
     cc.confLocks[index].WRLock()
@@ -255,10 +261,6 @@ func (cc *ConfigController) UpdateService(serviceKey string, remoteVersion uint,
         AddServiceConf(cc.confHub, uint(index), sortedKeys, sortedValues)
     }
     cc.confLocks[index].Release()
-    //更新版本
-    cc.indexLock.WRLock()
-    defer cc.indexLock.Release()
-    UpdServiceVersion(cc.indexHub, serviceKey, remoteVersion)
     return nil
 }
 

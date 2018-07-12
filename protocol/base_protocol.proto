@@ -5,11 +5,9 @@ enum MsgTypeId {
     SubscribeReqId         = 2;//client向agent发起订阅请求,agent向broker发起订阅请求
     SubscribeBrokerRspId   = 3;//broker向agent回复订阅请求
     SubscribeAgentRspId    = 4;//agent向client回复订阅请求
-    AddConfigReqId         = 5;//broker向client推送添加一个配置项命令
-    DelConfigReqId         = 6;//broker向client发起删除一个配置项命令
-    UpdateConfigReqId      = 7;//broker向client发起更新一个配置项的命令
-    PullServiceConfigReqId = 8;//agent向broker拉取一个服务的最新配置
-    PullServiceConfigRspId = 9;//broker回复agent一个服务的最新配置
+    PushServiceConfigReqId = 5;//broker推送给agent某服务的最新配置
+    PullServiceConfigReqId = 6;//agent向broker拉取一个服务的最新配置
+    PullServiceConfigRspId = 7;//broker回复agent一个服务的最新配置
 }
 
 //client向agent发起使用中请求
@@ -37,27 +35,12 @@ message SubscribeAgentRsp {
     required int32  code       = 2;//是否订阅成功，0成功 -1失败
 }
 
-//broker向client推送添加一个配置项命令
-message AddConfigReq {
+//broker推送给agent某服务的最新配置
+message PushServiceConfigReq {
     required string serviceKey = 1;
     required uint32 version    = 2;
-    required string confKey    = 3;
-    required string value      = 4;
-}
-
-//broker向client发起删除一个配置项命令
-message DelConfigReq {
-    required string serviceKey = 1;
-    required uint32 version    = 2;
-    required string confKey    = 3;
-}
-
-//broker向client发起更新一个配置项的命令
-message UpdateConfigReq {
-    required string serviceKey = 1;
-    required uint32 version    = 2;
-    required string confKey    = 3;
-    required string value      = 4;
+    repeated string confKeys   = 3;
+    repeated string values     = 4;//如果keys values为空，说明此服务的配置已被删除
 }
 
 //agent向broker拉取一个服务的最新配置
