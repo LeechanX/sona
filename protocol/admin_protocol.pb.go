@@ -22,34 +22,28 @@ type AdminMsgTypeId int32
 
 const (
 	AdminMsgTypeId_AdminAddConfigReqId AdminMsgTypeId = 21
-	AdminMsgTypeId_AdminAddConfigRspId AdminMsgTypeId = 22
-	AdminMsgTypeId_AdminDelConfigReqId AdminMsgTypeId = 23
-	AdminMsgTypeId_AdminDelConfigRspId AdminMsgTypeId = 24
-	AdminMsgTypeId_AdminUpdConfigReqId AdminMsgTypeId = 25
-	AdminMsgTypeId_AdminUpdConfigRspId AdminMsgTypeId = 26
-	AdminMsgTypeId_AdminGetConfigReqId AdminMsgTypeId = 27
-	AdminMsgTypeId_AdminGetConfigRspId AdminMsgTypeId = 28
+	AdminMsgTypeId_AdminDelConfigReqId AdminMsgTypeId = 22
+	AdminMsgTypeId_AdminUpdConfigReqId AdminMsgTypeId = 23
+	AdminMsgTypeId_AdminExecuteRspId   AdminMsgTypeId = 24
+	AdminMsgTypeId_AdminGetConfigReqId AdminMsgTypeId = 25
+	AdminMsgTypeId_AdminGetConfigRspId AdminMsgTypeId = 26
 )
 
 var AdminMsgTypeId_name = map[int32]string{
 	21: "AdminAddConfigReqId",
-	22: "AdminAddConfigRspId",
-	23: "AdminDelConfigReqId",
-	24: "AdminDelConfigRspId",
-	25: "AdminUpdConfigReqId",
-	26: "AdminUpdConfigRspId",
-	27: "AdminGetConfigReqId",
-	28: "AdminGetConfigRspId",
+	22: "AdminDelConfigReqId",
+	23: "AdminUpdConfigReqId",
+	24: "AdminExecuteRspId",
+	25: "AdminGetConfigReqId",
+	26: "AdminGetConfigRspId",
 }
 var AdminMsgTypeId_value = map[string]int32{
 	"AdminAddConfigReqId": 21,
-	"AdminAddConfigRspId": 22,
-	"AdminDelConfigReqId": 23,
-	"AdminDelConfigRspId": 24,
-	"AdminUpdConfigReqId": 25,
-	"AdminUpdConfigRspId": 26,
-	"AdminGetConfigReqId": 27,
-	"AdminGetConfigRspId": 28,
+	"AdminDelConfigReqId": 22,
+	"AdminUpdConfigReqId": 23,
+	"AdminExecuteRspId":   24,
+	"AdminGetConfigReqId": 25,
+	"AdminGetConfigRspId": 26,
 }
 
 func (x AdminMsgTypeId) Enum() *AdminMsgTypeId {
@@ -69,14 +63,13 @@ func (x *AdminMsgTypeId) UnmarshalJSON(data []byte) error {
 	return nil
 }
 func (AdminMsgTypeId) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_admin_protocol_96ad09d7473f4a36, []int{0}
+	return fileDescriptor_admin_protocol_4b3e03aa8d534ae3, []int{0}
 }
 
 type AdminAddConfigReq struct {
 	ServiceKey           *string  `protobuf:"bytes,1,req,name=serviceKey" json:"serviceKey,omitempty"`
-	Key                  *string  `protobuf:"bytes,2,req,name=key" json:"key,omitempty"`
-	OldValue             *string  `protobuf:"bytes,3,req,name=oldValue" json:"oldValue,omitempty"`
-	NewValue             *string  `protobuf:"bytes,4,req,name=newValue" json:"newValue,omitempty"`
+	ConfKeys             []string `protobuf:"bytes,2,rep,name=confKeys" json:"confKeys,omitempty"`
+	Values               []string `protobuf:"bytes,3,rep,name=values" json:"values,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -86,7 +79,7 @@ func (m *AdminAddConfigReq) Reset()         { *m = AdminAddConfigReq{} }
 func (m *AdminAddConfigReq) String() string { return proto.CompactTextString(m) }
 func (*AdminAddConfigReq) ProtoMessage()    {}
 func (*AdminAddConfigReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_admin_protocol_96ad09d7473f4a36, []int{0}
+	return fileDescriptor_admin_protocol_4b3e03aa8d534ae3, []int{0}
 }
 func (m *AdminAddConfigReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AdminAddConfigReq.Unmarshal(m, b)
@@ -113,77 +106,23 @@ func (m *AdminAddConfigReq) GetServiceKey() string {
 	return ""
 }
 
-func (m *AdminAddConfigReq) GetKey() string {
-	if m != nil && m.Key != nil {
-		return *m.Key
+func (m *AdminAddConfigReq) GetConfKeys() []string {
+	if m != nil {
+		return m.ConfKeys
 	}
-	return ""
+	return nil
 }
 
-func (m *AdminAddConfigReq) GetOldValue() string {
-	if m != nil && m.OldValue != nil {
-		return *m.OldValue
+func (m *AdminAddConfigReq) GetValues() []string {
+	if m != nil {
+		return m.Values
 	}
-	return ""
-}
-
-func (m *AdminAddConfigReq) GetNewValue() string {
-	if m != nil && m.NewValue != nil {
-		return *m.NewValue
-	}
-	return ""
-}
-
-type AdminAddConfigRsp struct {
-	Code                 *int32   `protobuf:"varint,1,req,name=code" json:"code,omitempty"`
-	Errmsg               *string  `protobuf:"bytes,2,opt,name=errmsg" json:"errmsg,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *AdminAddConfigRsp) Reset()         { *m = AdminAddConfigRsp{} }
-func (m *AdminAddConfigRsp) String() string { return proto.CompactTextString(m) }
-func (*AdminAddConfigRsp) ProtoMessage()    {}
-func (*AdminAddConfigRsp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_admin_protocol_96ad09d7473f4a36, []int{1}
-}
-func (m *AdminAddConfigRsp) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_AdminAddConfigRsp.Unmarshal(m, b)
-}
-func (m *AdminAddConfigRsp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_AdminAddConfigRsp.Marshal(b, m, deterministic)
-}
-func (dst *AdminAddConfigRsp) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AdminAddConfigRsp.Merge(dst, src)
-}
-func (m *AdminAddConfigRsp) XXX_Size() int {
-	return xxx_messageInfo_AdminAddConfigRsp.Size(m)
-}
-func (m *AdminAddConfigRsp) XXX_DiscardUnknown() {
-	xxx_messageInfo_AdminAddConfigRsp.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_AdminAddConfigRsp proto.InternalMessageInfo
-
-func (m *AdminAddConfigRsp) GetCode() int32 {
-	if m != nil && m.Code != nil {
-		return *m.Code
-	}
-	return 0
-}
-
-func (m *AdminAddConfigRsp) GetErrmsg() string {
-	if m != nil && m.Errmsg != nil {
-		return *m.Errmsg
-	}
-	return ""
+	return nil
 }
 
 type AdminDelConfigReq struct {
 	ServiceKey           *string  `protobuf:"bytes,1,req,name=serviceKey" json:"serviceKey,omitempty"`
-	Key                  *string  `protobuf:"bytes,2,req,name=key" json:"key,omitempty"`
-	OldValue             *string  `protobuf:"bytes,3,req,name=oldValue" json:"oldValue,omitempty"`
+	Version              *uint32  `protobuf:"varint,2,req,name=version" json:"version,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -193,7 +132,7 @@ func (m *AdminDelConfigReq) Reset()         { *m = AdminDelConfigReq{} }
 func (m *AdminDelConfigReq) String() string { return proto.CompactTextString(m) }
 func (*AdminDelConfigReq) ProtoMessage()    {}
 func (*AdminDelConfigReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_admin_protocol_96ad09d7473f4a36, []int{2}
+	return fileDescriptor_admin_protocol_4b3e03aa8d534ae3, []int{1}
 }
 func (m *AdminDelConfigReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AdminDelConfigReq.Unmarshal(m, b)
@@ -220,71 +159,18 @@ func (m *AdminDelConfigReq) GetServiceKey() string {
 	return ""
 }
 
-func (m *AdminDelConfigReq) GetKey() string {
-	if m != nil && m.Key != nil {
-		return *m.Key
-	}
-	return ""
-}
-
-func (m *AdminDelConfigReq) GetOldValue() string {
-	if m != nil && m.OldValue != nil {
-		return *m.OldValue
-	}
-	return ""
-}
-
-type AdminDelConfigRsp struct {
-	Code                 *int32   `protobuf:"varint,1,req,name=code" json:"code,omitempty"`
-	Errmsg               *string  `protobuf:"bytes,2,opt,name=errmsg" json:"errmsg,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *AdminDelConfigRsp) Reset()         { *m = AdminDelConfigRsp{} }
-func (m *AdminDelConfigRsp) String() string { return proto.CompactTextString(m) }
-func (*AdminDelConfigRsp) ProtoMessage()    {}
-func (*AdminDelConfigRsp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_admin_protocol_96ad09d7473f4a36, []int{3}
-}
-func (m *AdminDelConfigRsp) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_AdminDelConfigRsp.Unmarshal(m, b)
-}
-func (m *AdminDelConfigRsp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_AdminDelConfigRsp.Marshal(b, m, deterministic)
-}
-func (dst *AdminDelConfigRsp) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AdminDelConfigRsp.Merge(dst, src)
-}
-func (m *AdminDelConfigRsp) XXX_Size() int {
-	return xxx_messageInfo_AdminDelConfigRsp.Size(m)
-}
-func (m *AdminDelConfigRsp) XXX_DiscardUnknown() {
-	xxx_messageInfo_AdminDelConfigRsp.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_AdminDelConfigRsp proto.InternalMessageInfo
-
-func (m *AdminDelConfigRsp) GetCode() int32 {
-	if m != nil && m.Code != nil {
-		return *m.Code
+func (m *AdminDelConfigReq) GetVersion() uint32 {
+	if m != nil && m.Version != nil {
+		return *m.Version
 	}
 	return 0
 }
 
-func (m *AdminDelConfigRsp) GetErrmsg() string {
-	if m != nil && m.Errmsg != nil {
-		return *m.Errmsg
-	}
-	return ""
-}
-
 type AdminUpdConfigReq struct {
 	ServiceKey           *string  `protobuf:"bytes,1,req,name=serviceKey" json:"serviceKey,omitempty"`
-	Key                  *string  `protobuf:"bytes,2,req,name=key" json:"key,omitempty"`
-	OldValue             *string  `protobuf:"bytes,3,req,name=oldValue" json:"oldValue,omitempty"`
-	NewValue             *string  `protobuf:"bytes,4,req,name=newValue" json:"newValue,omitempty"`
+	Version              *string  `protobuf:"bytes,2,req,name=version" json:"version,omitempty"`
+	ConfKeys             []string `protobuf:"bytes,3,rep,name=confKeys" json:"confKeys,omitempty"`
+	Values               []string `protobuf:"bytes,4,rep,name=values" json:"values,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -294,7 +180,7 @@ func (m *AdminUpdConfigReq) Reset()         { *m = AdminUpdConfigReq{} }
 func (m *AdminUpdConfigReq) String() string { return proto.CompactTextString(m) }
 func (*AdminUpdConfigReq) ProtoMessage()    {}
 func (*AdminUpdConfigReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_admin_protocol_96ad09d7473f4a36, []int{4}
+	return fileDescriptor_admin_protocol_4b3e03aa8d534ae3, []int{2}
 }
 func (m *AdminUpdConfigReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AdminUpdConfigReq.Unmarshal(m, b)
@@ -321,30 +207,30 @@ func (m *AdminUpdConfigReq) GetServiceKey() string {
 	return ""
 }
 
-func (m *AdminUpdConfigReq) GetKey() string {
-	if m != nil && m.Key != nil {
-		return *m.Key
+func (m *AdminUpdConfigReq) GetVersion() string {
+	if m != nil && m.Version != nil {
+		return *m.Version
 	}
 	return ""
 }
 
-func (m *AdminUpdConfigReq) GetOldValue() string {
-	if m != nil && m.OldValue != nil {
-		return *m.OldValue
+func (m *AdminUpdConfigReq) GetConfKeys() []string {
+	if m != nil {
+		return m.ConfKeys
 	}
-	return ""
+	return nil
 }
 
-func (m *AdminUpdConfigReq) GetNewValue() string {
-	if m != nil && m.NewValue != nil {
-		return *m.NewValue
+func (m *AdminUpdConfigReq) GetValues() []string {
+	if m != nil {
+		return m.Values
 	}
-	return ""
+	return nil
 }
 
 type AdminUpdConfigRsp struct {
 	Code                 *int32   `protobuf:"varint,1,req,name=code" json:"code,omitempty"`
-	Errmsg               *string  `protobuf:"bytes,2,opt,name=errmsg" json:"errmsg,omitempty"`
+	Error                *string  `protobuf:"bytes,2,opt,name=error" json:"error,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -354,7 +240,7 @@ func (m *AdminUpdConfigRsp) Reset()         { *m = AdminUpdConfigRsp{} }
 func (m *AdminUpdConfigRsp) String() string { return proto.CompactTextString(m) }
 func (*AdminUpdConfigRsp) ProtoMessage()    {}
 func (*AdminUpdConfigRsp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_admin_protocol_96ad09d7473f4a36, []int{5}
+	return fileDescriptor_admin_protocol_4b3e03aa8d534ae3, []int{3}
 }
 func (m *AdminUpdConfigRsp) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AdminUpdConfigRsp.Unmarshal(m, b)
@@ -381,9 +267,9 @@ func (m *AdminUpdConfigRsp) GetCode() int32 {
 	return 0
 }
 
-func (m *AdminUpdConfigRsp) GetErrmsg() string {
-	if m != nil && m.Errmsg != nil {
-		return *m.Errmsg
+func (m *AdminUpdConfigRsp) GetError() string {
+	if m != nil && m.Error != nil {
+		return *m.Error
 	}
 	return ""
 }
@@ -399,7 +285,7 @@ func (m *AdminGetConfigReq) Reset()         { *m = AdminGetConfigReq{} }
 func (m *AdminGetConfigReq) String() string { return proto.CompactTextString(m) }
 func (*AdminGetConfigReq) ProtoMessage()    {}
 func (*AdminGetConfigReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_admin_protocol_96ad09d7473f4a36, []int{6}
+	return fileDescriptor_admin_protocol_4b3e03aa8d534ae3, []int{4}
 }
 func (m *AdminGetConfigReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AdminGetConfigReq.Unmarshal(m, b)
@@ -429,8 +315,9 @@ func (m *AdminGetConfigReq) GetServiceKey() string {
 type AdminGetConfigRsp struct {
 	ServiceKey           *string  `protobuf:"bytes,1,req,name=serviceKey" json:"serviceKey,omitempty"`
 	Code                 *int32   `protobuf:"varint,2,req,name=code" json:"code,omitempty"`
-	Keys                 []string `protobuf:"bytes,3,rep,name=keys" json:"keys,omitempty"`
-	Values               []string `protobuf:"bytes,4,rep,name=values" json:"values,omitempty"`
+	Version              *string  `protobuf:"bytes,3,req,name=version" json:"version,omitempty"`
+	ConfKeys             []string `protobuf:"bytes,4,rep,name=confKeys" json:"confKeys,omitempty"`
+	Values               []string `protobuf:"bytes,5,rep,name=values" json:"values,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -440,7 +327,7 @@ func (m *AdminGetConfigRsp) Reset()         { *m = AdminGetConfigRsp{} }
 func (m *AdminGetConfigRsp) String() string { return proto.CompactTextString(m) }
 func (*AdminGetConfigRsp) ProtoMessage()    {}
 func (*AdminGetConfigRsp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_admin_protocol_96ad09d7473f4a36, []int{7}
+	return fileDescriptor_admin_protocol_4b3e03aa8d534ae3, []int{5}
 }
 func (m *AdminGetConfigRsp) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AdminGetConfigRsp.Unmarshal(m, b)
@@ -474,9 +361,16 @@ func (m *AdminGetConfigRsp) GetCode() int32 {
 	return 0
 }
 
-func (m *AdminGetConfigRsp) GetKeys() []string {
+func (m *AdminGetConfigRsp) GetVersion() string {
+	if m != nil && m.Version != nil {
+		return *m.Version
+	}
+	return ""
+}
+
+func (m *AdminGetConfigRsp) GetConfKeys() []string {
 	if m != nil {
-		return m.Keys
+		return m.ConfKeys
 	}
 	return nil
 }
@@ -490,9 +384,7 @@ func (m *AdminGetConfigRsp) GetValues() []string {
 
 func init() {
 	proto.RegisterType((*AdminAddConfigReq)(nil), "protocol.AdminAddConfigReq")
-	proto.RegisterType((*AdminAddConfigRsp)(nil), "protocol.AdminAddConfigRsp")
 	proto.RegisterType((*AdminDelConfigReq)(nil), "protocol.AdminDelConfigReq")
-	proto.RegisterType((*AdminDelConfigRsp)(nil), "protocol.AdminDelConfigRsp")
 	proto.RegisterType((*AdminUpdConfigReq)(nil), "protocol.AdminUpdConfigReq")
 	proto.RegisterType((*AdminUpdConfigRsp)(nil), "protocol.AdminUpdConfigRsp")
 	proto.RegisterType((*AdminGetConfigReq)(nil), "protocol.AdminGetConfigReq")
@@ -501,28 +393,28 @@ func init() {
 }
 
 func init() {
-	proto.RegisterFile("admin_protocol.proto", fileDescriptor_admin_protocol_96ad09d7473f4a36)
+	proto.RegisterFile("admin_protocol.proto", fileDescriptor_admin_protocol_4b3e03aa8d534ae3)
 }
 
-var fileDescriptor_admin_protocol_96ad09d7473f4a36 = []byte{
-	// 299 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xb4, 0x52, 0x4b, 0x4b, 0xfb, 0x40,
-	0x10, 0xa7, 0x49, 0xfe, 0x7f, 0xda, 0xb1, 0x94, 0x75, 0x7d, 0x74, 0x7d, 0x1c, 0x42, 0x2e, 0x06,
-	0x0f, 0x82, 0x1f, 0xa1, 0x28, 0xca, 0x22, 0x5e, 0x7c, 0xe1, 0x4d, 0x4a, 0x66, 0x0c, 0xa1, 0x69,
-	0x76, 0xcd, 0xd6, 0x4a, 0xbe, 0xa9, 0x1f, 0x47, 0xb2, 0x36, 0x69, 0x20, 0xc1, 0x1e, 0xc4, 0xdb,
-	0xce, 0xfc, 0xe6, 0xf7, 0x60, 0x66, 0x61, 0x77, 0x8a, 0xf3, 0x24, 0x7b, 0xd1, 0xb9, 0x5a, 0xa8,
-	0x48, 0xa5, 0x67, 0xf6, 0xc1, 0xfb, 0x55, 0x1d, 0x3c, 0xc3, 0xf6, 0xa4, 0x9c, 0x98, 0x20, 0x5e,
-	0xa8, 0xec, 0x35, 0x89, 0xef, 0xe8, 0x8d, 0x73, 0x00, 0x43, 0xf9, 0x32, 0x89, 0xe8, 0x86, 0x0a,
-	0xd1, 0xf3, 0x9d, 0x70, 0xc0, 0xb7, 0xc0, 0x9d, 0x51, 0x21, 0x1c, 0x5b, 0x30, 0xe8, 0xab, 0x14,
-	0x9f, 0xa6, 0xe9, 0x3b, 0x09, 0xb7, 0xea, 0x64, 0xf4, 0xf1, 0xdd, 0xf1, 0xca, 0x4e, 0x70, 0xde,
-	0x52, 0x36, 0x9a, 0x0f, 0xc1, 0x8b, 0x14, 0x92, 0xd5, 0xfc, 0xc7, 0x47, 0xf0, 0x9f, 0xf2, 0x7c,
-	0x6e, 0x62, 0xe1, 0xf8, 0xbd, 0x70, 0x10, 0x5c, 0xad, 0x28, 0x97, 0x94, 0xfe, 0x26, 0x4c, 0x6d,
-	0xbd, 0xd6, 0xd9, 0x68, 0x5d, 0xed, 0xe1, 0x51, 0xff, 0xd5, 0x1e, 0xd6, 0xca, 0x1b, 0xc3, 0x9c,
-	0xac, 0x28, 0xd7, 0xb4, 0xf8, 0x31, 0x4c, 0x70, 0xdf, 0x1a, 0x34, 0xba, 0x33, 0x75, 0xe5, 0xe7,
-	0x58, 0xbf, 0x21, 0x78, 0x33, 0x2a, 0x8c, 0x70, 0x7d, 0x37, 0x1c, 0x94, 0xee, 0xcb, 0x32, 0xaf,
-	0x11, 0x5e, 0x59, 0x9f, 0x7e, 0xf6, 0x60, 0x64, 0x55, 0x6f, 0x4d, 0xfc, 0x50, 0x68, 0x92, 0xc8,
-	0xc7, 0xb0, 0xd3, 0xfa, 0x25, 0x12, 0xd9, 0x5e, 0x07, 0x60, 0xb4, 0x44, 0xb6, 0x5f, 0x03, 0xcd,
-	0x53, 0x4a, 0x64, 0xe3, 0x0e, 0xc0, 0x32, 0x44, 0x0d, 0x34, 0x2f, 0x20, 0x91, 0x1d, 0x74, 0x00,
-	0x96, 0x71, 0x58, 0x03, 0xcd, 0x35, 0x49, 0x64, 0x47, 0x1d, 0x80, 0x65, 0x1c, 0x7f, 0x05, 0x00,
-	0x00, 0xff, 0xff, 0x10, 0x4d, 0x64, 0xaf, 0x0e, 0x03, 0x00, 0x00,
+var fileDescriptor_admin_protocol_4b3e03aa8d534ae3 = []byte{
+	// 293 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0x94, 0x51, 0x4f, 0x4b, 0xc3, 0x30,
+	0x14, 0xa7, 0x69, 0xab, 0x6b, 0x70, 0x33, 0x46, 0xe7, 0xa2, 0xa7, 0xd2, 0x8b, 0xc5, 0x83, 0x78,
+	0xf4, 0x3a, 0x54, 0x24, 0x0c, 0x2f, 0x43, 0x2f, 0x5e, 0x64, 0x34, 0x6f, 0xb3, 0x50, 0x9b, 0x98,
+	0x74, 0xc5, 0x7e, 0x1f, 0x3f, 0xa8, 0x34, 0x74, 0xa5, 0xae, 0x63, 0xe0, 0x2d, 0x8f, 0xf7, 0xfb,
+	0x9b, 0x87, 0xcf, 0x16, 0xe2, 0x33, 0xcd, 0xdf, 0x95, 0x96, 0x85, 0x4c, 0x64, 0x76, 0x63, 0x1f,
+	0x74, 0xb0, 0x99, 0x23, 0x8e, 0x4f, 0xa6, 0x35, 0x62, 0x2a, 0xc4, 0xbd, 0xcc, 0x97, 0xe9, 0x6a,
+	0x0e, 0x5f, 0x94, 0x62, 0x6c, 0x40, 0x97, 0x69, 0x02, 0x33, 0xa8, 0x98, 0x13, 0xa2, 0x38, 0xa0,
+	0x04, 0x0f, 0x12, 0x99, 0x2f, 0x67, 0x50, 0x19, 0x86, 0x42, 0x37, 0x0e, 0xe8, 0x08, 0x1f, 0x94,
+	0x8b, 0x6c, 0x0d, 0x86, 0xb9, 0xf5, 0x1c, 0xdd, 0x35, 0x52, 0x0f, 0x90, 0xed, 0x97, 0x3a, 0xc6,
+	0x87, 0x25, 0x68, 0x93, 0xca, 0x9c, 0xa1, 0x10, 0xc5, 0xc3, 0xe8, 0xad, 0x61, 0xbe, 0x2a, 0xf1,
+	0x2f, 0xe6, 0xdf, 0x54, 0xee, 0x56, 0x2a, 0xcf, 0xa6, 0xba, 0xed, 0x69, 0x1b, 0x45, 0x8f, 0xb0,
+	0x97, 0x48, 0x01, 0x56, 0xd5, 0xa7, 0x43, 0xec, 0x83, 0xd6, 0x52, 0x33, 0x14, 0x3a, 0x71, 0x10,
+	0x5d, 0x35, 0x8c, 0x27, 0x28, 0xf6, 0xa6, 0x89, 0x3e, 0x7a, 0x40, 0xa3, 0x76, 0xc6, 0xde, 0xd8,
+	0x21, 0x6b, 0xd7, 0x29, 0xe1, 0xf6, 0x4a, 0x78, 0x5b, 0x25, 0xfc, 0x7a, 0xbe, 0xfe, 0x71, 0xf0,
+	0xc8, 0x5a, 0x3d, 0x9b, 0xd5, 0x4b, 0xa5, 0x80, 0x0b, 0x3a, 0xc1, 0xa7, 0xbd, 0xc3, 0x71, 0x41,
+	0xc6, 0xed, 0xa2, 0x7b, 0x06, 0x2e, 0xc8, 0x79, 0xbb, 0xe8, 0xfe, 0x32, 0x17, 0x64, 0x42, 0xc7,
+	0x4d, 0x8f, 0xc7, 0x6f, 0x48, 0xd6, 0x05, 0xcc, 0x8d, 0xe2, 0x82, 0xb0, 0x16, 0xdf, 0xfd, 0x07,
+	0x2e, 0xc8, 0xc5, 0x8e, 0x85, 0x65, 0x5c, 0xfe, 0x06, 0x00, 0x00, 0xff, 0xff, 0x8b, 0xce, 0x5a,
+	0x9a, 0x6d, 0x02, 0x00, 0x00,
 }
