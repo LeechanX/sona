@@ -6,6 +6,7 @@ import (
     "log"
     "net"
     "sync/atomic"
+    "sona/broker/conf"
 )
 
 //新增配置
@@ -54,13 +55,13 @@ func DelConfig(serviceKey string, version uint) error {
 }
 
 func AdminService() {
-    tcpAddr, _ := net.ResolveTCPAddr("tcp4", fmt.Sprintf("0.0.0.0:%d", GConf.AdminPort))
+    tcpAddr, _ := net.ResolveTCPAddr("tcp4", fmt.Sprintf("0.0.0.0:%d", conf.GlobalConf.AdminPort))
     listen, err := net.ListenTCP("tcp", tcpAddr)
     if err != nil {
         log.Fatalf("%s\n", err)
         os.Exit(1)
     }
-    log.Printf("create admin server(%s) successfully\n", fmt.Sprintf("0.0.0.0:%d", GConf.AdminPort))
+    log.Printf("create admin server(%s) successfully\n", fmt.Sprintf("0.0.0.0:%d", conf.GlobalConf.AdminPort))
     defer listen.Close()
 
     for {
@@ -70,7 +71,7 @@ func AdminService() {
             os.Exit(1)
         }
         //处理请求
-        if atomic.LoadInt32(&numberOfConnections) < int32(GConf.AgentConnectionLimit) {
+        if atomic.LoadInt32(&numberOfConnections) < int32(conf.GlobalConf.AgentConnectionLimit) {
             //TODO
             //(conn)
             log.Printf("current there are %d agent connections\n", numberOfConnections)

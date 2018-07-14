@@ -3,9 +3,9 @@ package dao
 import (
     "fmt"
     "errors"
-    "sona/broker/logic"
     "gopkg.in/mgo.v2"
     "gopkg.in/mgo.v2/bson"
+    "sona/broker/conf"
 )
 
 type ConfigureDocument struct {
@@ -17,17 +17,17 @@ type ConfigureDocument struct {
 
 //获取collection以便操作
 func getCollection() (*mgo.Session, *mgo.Collection) {
-    url := fmt.Sprintf("%s/%d", logic.GConf.DbHost, logic.GConf.DbPort)
+    url := fmt.Sprintf("%s/%d", conf.GlobalConf.DbHost, conf.GlobalConf.DbPort)
     session, err := mgo.Dial(url)
     if err != nil {
         fmt.Printf("%s\n", err)
         return nil, nil
     }
 
-    collection := session.DB(logic.GConf.DbName).C(logic.GConf.DbCollectionName)
+    collection := session.DB(conf.GlobalConf.DbName).C(conf.GlobalConf.DbCollectionName)
     if collection == nil {
         session.Close()
-        fmt.Printf("no database %s or collection %s\n", logic.GConf.DbName, logic.GConf.DbCollectionName)
+        fmt.Printf("no database %s or collection %s\n", conf.GlobalConf.DbName, conf.GlobalConf.DbCollectionName)
         return nil, nil
     }
     return session, collection

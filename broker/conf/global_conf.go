@@ -1,4 +1,4 @@
-package logic
+package conf
 
 import (
     "os"
@@ -7,7 +7,7 @@ import (
     "github.com/larspensjo/config"
 )
 
-type GlobalConf struct {
+type GlobalConfigure struct {
     BrokerPort int
     AdminPort int
     //agent连接个数限制
@@ -18,9 +18,9 @@ type GlobalConf struct {
     DbCollectionName string
 }
 
-var GConf GlobalConf
+var GlobalConf GlobalConfigure
 
-func LoadSelfConfig() {
+func LoadGlobalConfig() {
     cfgPath := flag.String("conf", "conf/sona-broker.ini", "configure file path")
     flag.Parse()
     //加载配置文件
@@ -34,13 +34,13 @@ func LoadSelfConfig() {
         log.Panicln("configure has no section: broker")
         os.Exit(1)
     }
-    GConf.BrokerPort, err = cfg.Int("broker", "port")
+    GlobalConf.BrokerPort, err = cfg.Int("broker", "port")
     if err != nil {
         log.Panicf("configure broker-port format error: %s\n", err)
         os.Exit(1)
     }
 
-    GConf.AgentConnectionLimit, err = cfg.Int("broker", "connection-limit")
+    GlobalConf.AgentConnectionLimit, err = cfg.Int("broker", "connection-limit")
     if err != nil {
         log.Panicf("configure broker-ConnectionLimit format error: %s\n", err)
         os.Exit(1)
@@ -50,7 +50,7 @@ func LoadSelfConfig() {
         log.Panicln("configure has no section: broker")
         os.Exit(1)
     }
-    GConf.AdminPort, err = cfg.Int("admin", "port")
+    GlobalConf.AdminPort, err = cfg.Int("admin", "port")
     if err != nil {
         log.Panicf("configure admin-port format error: %s\n", err)
         os.Exit(1)
@@ -61,31 +61,31 @@ func LoadSelfConfig() {
         os.Exit(1)
     }
 
-    GConf.DbHost, err = cfg.String("db","host")
+    GlobalConf.DbHost, err = cfg.String("db","host")
     if err != nil {
         log.Panicf("configure db-host format error: %s\n", err)
         os.Exit(1)
     }
 
-    GConf.DbPort, err = cfg.Int("db", "port")
+    GlobalConf.DbPort, err = cfg.Int("db", "port")
     if err != nil {
         log.Panicf("configure db-port format error: %s\n", err)
         os.Exit(1)
     }
 
-    GConf.DbHost, err = cfg.String("db","host")
+    GlobalConf.DbHost, err = cfg.String("db","host")
     if err != nil {
         log.Panicf("configure db-host format error: %s\n", err)
         os.Exit(1)
     }
 
-    GConf.DbName, err = cfg.String("db","database")
+    GlobalConf.DbName, err = cfg.String("db","database")
     if err != nil {
         log.Panicf("configure db-database format error: %s\n", err)
         os.Exit(1)
     }
 
-    GConf.DbCollectionName, err = cfg.String("db","collection")
+    GlobalConf.DbCollectionName, err = cfg.String("db","collection")
     if err != nil {
         log.Panicf("configure db-collection format error: %s\n", err)
         os.Exit(1)

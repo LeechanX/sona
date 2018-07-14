@@ -1,15 +1,16 @@
 package main
 
 import (
-    "sona/common"
-    "sona/broker/logic"
     "time"
     "fmt"
+    "sona/common"
+    "sona/broker/conf"
+    "sona/broker/logic"
 )
 
 func main() {
     common.PrintLogo()
-    logic.LoadSelfConfig()
+    conf.LoadGlobalConfig()
     //加载全部配置
     err := logic.ConfigData.Reset()
     if err != nil {

@@ -18,9 +18,10 @@ const (
 type AgentConnection struct {
     status int32
     conn *net.TCPConn
+    sendQueue chan proto.Message
+
     //此连接订阅了哪些configure
     subscriptList map[string]bool
-    sendQueue chan proto.Message
 }
 
 //创建
