@@ -9,107 +9,166 @@ import (
 //data:读多写少 key: string, value: string
 //不使用sync.Map还是因为这个结构支持的方法太局限
 
+const (
+    kStatusIdle = 1//空闲中
+    kStatusEditing = 2//正在配置中
+)
+
 type ServiceData struct {
-    conf map[string]string
     version uint
     serviceKey string
+    status int
+    confKeys []string
+    values []string
 }
 
 type ConfigureData struct {
     //格式：
     //serviceKey1: configKey1:configValue1, configKey2:configValue2...
     //serviceKey2: configKey1:configValue1, configKey2:configValue2...
-    data map[string]ServiceData
+    data map[string]*ServiceData
     rwMutex sync.RWMutex
 }
 
 //全局配置
 var ConfigData ConfigureData
 
-func (cfd *ConfigureData) Reset(dbDoc []*dao.ConfigureDocument) {
+func (cfd *ConfigureData) Reset() error {
+    dbDoc, err := dao.ReloadAllData()
+    if err != nil {
+        return err
+    }
     newData := make(map[string]*ServiceData)
     //创新新数据
     for _, doc := range dbDoc {
-        serviceData := &ServiceData{}
-        serviceData.serviceKey = doc.ServiceKey
-        serviceData.version = doc.Version
-        serviceData.conf = make(map[string]string)
-        length := len(doc.ConfKeys)
-        for i := 0;i < length;i++ {
-            k, v := doc.ConfKeys[i], doc.ConfValues[i]
-            serviceData.conf[k] = v
+        serviceData := &ServiceData{
+            serviceKey:doc.ServiceKey,
+            version:doc.Version,
+            status:kStatusIdle,
+            confKeys:doc.ConfKeys,
+            values:doc.ConfValues,
         }
+        newData[doc.ServiceKey] = serviceData
     }
-    //TODO 创建与重置之间有新的更改怎么办。。。。。。
-    //TODO 且主broker并没有必要读DB更新
-    //TODO 难点：Broker如何知道主从切换，即如何知道自己成了主、成了备
-    //重置
-
+    ConfigData.rwMutex.Lock()
+    cfd.data = newData
+    ConfigData.rwMutex.Unlock()
+    return nil
 }
 
-//cas方式新增、修改配置
-//返回值：bool表示是否需要推送
-func (cfd *ConfigureData) AddOrUpdateData(serviceKey string, configKey string, oldValue string, newValue string) (bool, error) {
+//新增配置操作
+func (cfd *ConfigureData) AddConfig(serviceKey string, configKeys []string, values []string) (uint, error) {
+    var version uint
     cfd.rwMutex.Lock()
-    defer cfd.rwMutex.Unlock()
-    var needPush bool
-    if _, ok := cfd.data[serviceKey];!ok {
-        //不存在，添加serviceKey
-        cfd.data[serviceKey] = make(map[string]string)
-        //检查CAS
-        if oldValue != "" {
-            return false, errors.New("please retry, cas wrong")
-        }
-        //新创建的serviceKey，所以不需要推送，不可能有人已订阅
+    _, ok := cfd.data[serviceKey]
+    if !ok {
+        //在本地内存中先预先新增
+        cfd.data[serviceKey] = &ServiceData{}
+        cfd.data[serviceKey].version = 0
+        cfd.data[serviceKey].serviceKey = serviceKey
+        cfd.data[serviceKey].status = kStatusEditing
+        cfd.rwMutex.Unlock()
     } else {
-        originValue := cfd.data[serviceKey][configKey]
-        //检查CAS
-        if oldValue != originValue {
-            return false, errors.New("please retry, cas wrong")
+        version = cfd.data[serviceKey].version
+        if len(cfd.data[serviceKey].confKeys) == 0 {
+            //原有记录已被删除，可以被新增，检查是否在编辑中
+            if cfd.data[serviceKey].status == kStatusEditing {
+                cfd.rwMutex.Unlock()
+                return 0, errors.New("this service configure is in editing")
+            } else {
+                //标记为正在编辑
+                cfd.data[serviceKey].status = kStatusEditing
+                cfd.rwMutex.Unlock()
+            }
+        } else {
+            //已存在
+            cfd.rwMutex.Unlock()
+            return 0, errors.New("this service configure is already exist")
         }
-        needPush = true
     }
-    //添加，需要push
-    cfd.data[serviceKey][configKey] = newValue
-    return needPush, nil
-}
-
-//cas方式删除配置项，必须要重推
-func (cfd *ConfigureData) DeleteData(serviceKey string, configKey string, oldValue string) error {
+    if version != 0 {
+        version += 1
+    }
+    //执行mongodb新增
+    err := dao.AddDocument(serviceKey, version, configKeys, values)
     cfd.rwMutex.Lock()
     defer cfd.rwMutex.Unlock()
-    var err error = nil
-    if _, ok := cfd.data[serviceKey];ok {
-        if originValue, ok := cfd.data[serviceKey][configKey];ok {
-            //检查cas
-            if originValue != oldValue {
-                err = errors.New("please retry, cas wrong")
+    if err != nil {
+        //执行失败，回退
+        //如果是刚添加的，则在内存中删除之
+        if version != 0 {
+            delete(cfd.data, serviceKey)
+        } else {
+            //否则重置空闲状态
+            cfd.data[serviceKey].status = kStatusIdle
+        }
+    } else {
+        //执行成功
+        cfd.data[serviceKey].confKeys = configKeys
+        cfd.data[serviceKey].values = values
+        //在内存中标记空闲
+        cfd.data[serviceKey].status = kStatusIdle
+    }
+    return version, nil
+}
+
+//cas方式删除配置项
+func (cfd *ConfigureData) DeleteData(serviceKey string, version uint) (uint, error) {
+    return cfd.UpdateData(serviceKey, version, []string{}, []string{})
+}
+
+//cas方式修改配置项
+func (cfd *ConfigureData) UpdateData(serviceKey string, version uint, configKeys []string, values []string) (uint, error) {
+    cfd.rwMutex.Lock()
+    _, ok := cfd.data[serviceKey]
+    if ok {
+        if cfd.data[serviceKey].version != version {
+            //正在编辑中
+            cfd.rwMutex.Unlock()
+            return 0, errors.New("this service configure's version is wrong")
+        } else {
+            if cfd.data[serviceKey].status == kStatusEditing {
+                //版本不对
+                cfd.rwMutex.Unlock()
+                return 0, errors.New("this service configure is in editing")
             } else {
-                delete(cfd.data[serviceKey], configKey)
-                if len(cfd.data[serviceKey]) == 0 {
-                    delete(cfd.data, serviceKey)
-                }
+                //标记为正在编辑
+                cfd.data[serviceKey].status = kStatusEditing
+                cfd.rwMutex.Unlock()
             }
         }
+    } else {
+        //不存在
+        cfd.rwMutex.Unlock()
+        return 0, errors.New("this service configure is not exist")
     }
-    return err
+    cfd.rwMutex.Unlock()
+    //在mongodb中执行删除, 即把配置内容设置为空
+    //版本+1
+    version += 1
+    err := dao.UpdateDocument(serviceKey, version, configKeys, values)
+    cfd.rwMutex.Lock()
+    defer cfd.rwMutex.Unlock()
+    if err == nil {
+        //mongodb操作成功, 更新内存
+        //更新版本
+        cfd.data[serviceKey].version = version
+        //将配置设置为空
+        cfd.data[serviceKey].confKeys = []string{}
+        cfd.data[serviceKey].values = []string{}
+    }
+    //在内存中标记空闲
+    cfd.data[serviceKey].status = kStatusIdle
+    return version, nil
 }
 
-//获取配置
-func (cfd *ConfigureData) GetData(serviceKey string, configKey string) string {
+//获取serviceKey
+func (cfd *ConfigureData) GetData(serviceKey string) ([]string, []string, uint) {
     cfd.rwMutex.RLock()
     defer cfd.rwMutex.RUnlock()
-    if _, ok := cfd.data[serviceKey];ok {
-        if value, ok := cfd.data[serviceKey][configKey];ok {
-            return value
-        }
+    data, ok := cfd.data[serviceKey]
+    if !ok {
+        return nil, nil, 0
     }
-    return ""
-}
-
-//查看是否存在serviceKey
-func (cfd *ConfigureData) IsServiceKeyExist(serviceKey string) map[string]string {
-    cfd.rwMutex.RLock()
-    defer cfd.rwMutex.RUnlock()
-    return cfd.data[serviceKey]
+    return data.confKeys, data.values, data.version
 }

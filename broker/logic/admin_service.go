@@ -9,52 +9,46 @@ import (
 )
 
 //新增配置
-func AddConfig(serviceKey string, configKey string, value string) error {
-    needPush, err := ConfigData.AddOrUpdateData(serviceKey, configKey, "", value)
+func AddConfig(serviceKey string, configKeys []string, values []string) error {
+    newVersion, err := ConfigData.AddConfig(serviceKey, configKeys, values)
     if err != nil {
-        log.Printf("Add config meet error: %s\n", err)
+        log.Printf("add %s configure meet error: %s\n", serviceKey, err)
         return err
     }
-    if needPush {
-        //push给每个agent连接
-        agents := SubscribedBook.GetSubscribers(serviceKey)
-        for _, agent := range agents {
-            agent.PushAddOrUpdated(serviceKey, configKey, value)
-        }
+    //如果有agent订阅, push给每个agent连接
+    agents := SubscribedBook.GetSubscribers(serviceKey)
+    for _, agent := range agents {
+        agent.PushConfig(serviceKey, uint32(newVersion), configKeys, values)
     }
     return nil
 }
 
 //修改配置
-func UpdateConfig(serviceKey string, configKey string, oldValue string, newValue string) error {
-    if oldValue == newValue {
-        return nil
-    }
-    needPush, err := ConfigData.AddOrUpdateData(serviceKey, configKey, oldValue, newValue)
+func UpdateConfig(serviceKey string, version uint, configKeys []string, values []string) error {
+    newVersion, err := ConfigData.UpdateData(serviceKey, version, configKeys, values)
     if err != nil {
-        log.Printf("Update config meet error: %s\n", err)
+        log.Printf("update %s configure meet error: %s\n", serviceKey, err)
         return err
     }
-    if needPush {
-        //push给每个agent连接
-        agents := SubscribedBook.GetSubscribers(serviceKey)
-        for _, agent := range agents {
-            agent.PushAddOrUpdated(serviceKey, configKey, newValue)
-        }
+    //如果有agent订阅, push给每个agent连接
+    agents := SubscribedBook.GetSubscribers(serviceKey)
+    for _, agent := range agents {
+        agent.PushConfig(serviceKey, uint32(newVersion), configKeys, values)
     }
     return nil
 }
 
 //删除配置
-func DelConfig(serviceKey string, configKey string, oldValue string) error {
-    if err := ConfigData.DeleteData(serviceKey, configKey, oldValue);err != nil {
-        log.Printf("Delete config meet error: %s\n", err)
+func DelConfig(serviceKey string, version uint) error {
+    newVersion, err := ConfigData.DeleteData(serviceKey, version)
+    if err != nil {
+        log.Printf("delete %s configure meet error: %s\n", serviceKey, err)
         return err
     }
-    //push给每个agent连接
+    //如果有agent订阅, push给每个agent连接
     agents := SubscribedBook.GetSubscribers(serviceKey)
     for _, agent := range agents {
-        agent.PushDeleted(serviceKey, configKey)
+        agent.PushConfig(serviceKey, uint32(newVersion), []string{}, []string{})
     }
     return nil
 }
@@ -77,7 +71,8 @@ func AdminService() {
         }
         //处理请求
         if atomic.LoadInt32(&numberOfConnections) < int32(GConf.AgentConnectionLimit) {
-            CreateConnection(conn)
+            //TODO
+            //(conn)
             log.Printf("current there are %d agent connections\n", numberOfConnections)
         } else {
             //直接关闭连接

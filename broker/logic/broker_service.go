@@ -29,7 +29,7 @@ func BrokerService() {
         }
         //处理请求
         if atomic.LoadInt32(&numberOfConnections) < int32(GConf.AgentConnectionLimit) {
-            CreateConnection(conn)
+            HoldAgentConnection(conn)
             log.Printf("current there are %d agent connections\n", numberOfConnections)
         } else {
             //直接关闭连接
