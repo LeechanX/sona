@@ -8,12 +8,13 @@ import (
     "time"
     "sona/core"
     "sona/common"
+    "sona/agent/conf"
     "sona/agent/logic"
 )
 
 func main() {
     common.PrintLogo()
-    logic.LoadSelfConfig()
+    conf.LoadGlobalConfig()
     //创建共享内存控制者
     controller, err := core.GetConfigController()
     if err != nil {
@@ -23,14 +24,14 @@ func main() {
     defer controller.Close()
 
     //创建UDP服务于client
-    udpAddr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("127.0.0.1:%d", logic.GConf.AgentPort))
+    udpAddr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("127.0.0.1:%d", conf.GlobalConf.AgentPort))
     if err != nil {
         log.Fatalf("can's resolve udp address 127.0.0.1:9901\n")
         os.Exit(1)
     }
 
     //创建TCP客户端去连接broker
-    addrStr := fmt.Sprintf("%s:%d", logic.GConf.BrokerIp, logic.GConf.BrokerPort)
+    addrStr := fmt.Sprintf("%s:%d", conf.GlobalConf.BrokerIp, conf.GlobalConf.BrokerPort)
     brokerConnector := logic.CreateConnect()
 
     //创建时间戳管理

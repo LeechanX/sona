@@ -1,4 +1,4 @@
-package logic
+package conf
 
 import (
     "os"
@@ -7,15 +7,15 @@ import (
     "github.com/larspensjo/config"
 )
 
-type GlobalConf struct {
+type GlobalConfigure struct {
     BrokerIp string
     BrokerPort int
     AgentPort int
 }
 
-var GConf GlobalConf
+var GlobalConf GlobalConfigure
 
-func LoadSelfConfig() {
+func LoadGlobalConfig() {
     cfgPath := flag.String("conf", "conf/sona-agent.ini", "configure file path")
     flag.Parse()
     //加载配置文件
@@ -29,12 +29,12 @@ func LoadSelfConfig() {
         log.Panicln("configure has no section: broker")
         os.Exit(1)
     }
-    GConf.BrokerIp, err = cfg.String("broker", "ip")
+    GlobalConf.BrokerIp, err = cfg.String("broker", "ip")
     if err != nil {
         log.Panicf("configure broker-ip format error: %s\n", err)
         os.Exit(1)
     }
-    GConf.BrokerPort, err = cfg.Int("broker", "port")
+    GlobalConf.BrokerPort, err = cfg.Int("broker", "port")
     if err != nil {
         log.Panicf("configure broker-port format error: %s\n", err)
         os.Exit(1)
@@ -44,7 +44,7 @@ func LoadSelfConfig() {
         log.Panicln("configure has no section: agent")
         os.Exit(1)
     }
-    GConf.AgentPort, err = cfg.Int("agent", "port")
+    GlobalConf.AgentPort, err = cfg.Int("agent", "port")
     if err != nil {
         log.Panicf("configure agent-port format error: %s\n", err)
         os.Exit(1)
