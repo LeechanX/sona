@@ -2,12 +2,15 @@ package logic
 
 import (
     "os"
-    "fmt"
     "log"
-    "net"
-    "sync/atomic"
+    "sona/protocol"
     "sona/broker/conf"
+    "sona/common/net/tcp"
+    "github.com/golang/protobuf/proto"
 )
+
+//全局：admin server，服务于web操作
+var AdminServer *tcp.Server
 
 //新增配置
 func AddConfig(serviceKey string, configKeys []string, values []string) error {
@@ -17,9 +20,19 @@ func AddConfig(serviceKey string, configKeys []string, values []string) error {
         return err
     }
     //如果有agent订阅, push给每个agent连接
-    agents := SubscribedBook.GetSubscribers(serviceKey)
+    agents := BrokerServer.SubscribeBook.GetSubscribers(serviceKey)
+    if len(agents) == 0 {
+        return nil
+    }
+    //创建推送包
+    pushReq := protocol.PushServiceConfigReq{
+        ServiceKey:&serviceKey,
+        ConfKeys:configKeys,
+        Values:values,
+    }
+    *pushReq.Version = uint32(newVersion)
     for _, agent := range agents {
-        agent.PushConfig(serviceKey, uint32(newVersion), configKeys, values)
+        agent.SendData(protocol.PushServiceConfigReqId, &pushReq)
     }
     return nil
 }
@@ -32,9 +45,19 @@ func UpdateConfig(serviceKey string, version uint, configKeys []string, values [
         return err
     }
     //如果有agent订阅, push给每个agent连接
-    agents := SubscribedBook.GetSubscribers(serviceKey)
+    agents := BrokerServer.SubscribeBook.GetSubscribers(serviceKey)
+    if len(agents) == 0 {
+        return nil
+    }
+    //创建推送包
+    pushReq := protocol.PushServiceConfigReq{
+        ServiceKey:&serviceKey,
+        ConfKeys:configKeys,
+        Values:values,
+    }
+    *pushReq.Version = uint32(newVersion)
     for _, agent := range agents {
-        agent.PushConfig(serviceKey, uint32(newVersion), configKeys, values)
+        agent.SendData(protocol.PushServiceConfigReqId, &pushReq)
     }
     return nil
 }
@@ -47,38 +70,182 @@ func DelConfig(serviceKey string, version uint) error {
         return err
     }
     //如果有agent订阅, push给每个agent连接
-    agents := SubscribedBook.GetSubscribers(serviceKey)
+    agents := BrokerServer.SubscribeBook.GetSubscribers(serviceKey)
+    if len(agents) == 0 {
+        return nil
+    }
+    //创建推送包
+    pushReq := protocol.PushServiceConfigReq{
+        ServiceKey:&serviceKey,
+        ConfKeys:[]string{},
+        Values:[]string{},
+    }
+    *pushReq.Version = uint32(newVersion)
     for _, agent := range agents {
-        agent.PushConfig(serviceKey, uint32(newVersion), []string{}, []string{})
+        agent.SendData(protocol.PushServiceConfigReqId, &pushReq)
     }
     return nil
 }
 
-func AdminService() {
-    tcpAddr, _ := net.ResolveTCPAddr("tcp4", fmt.Sprintf("0.0.0.0:%d", conf.GlobalConf.AdminPort))
-    listen, err := net.ListenTCP("tcp", tcpAddr)
+//消息ID与对应PB的映射
+func adminMapping(cmdId uint) proto.Message {
+    switch cmdId {
+    case protocol.AdminAddConfigReqId:
+        return &protocol.AdminAddConfigReq{}
+    case protocol.AdminDelConfigReqId:
+        return &protocol.AdminDelConfigReq{}
+    case protocol.AdminUpdConfigReqId:
+        return &protocol.AdminUpdConfigReq{}
+    case protocol.AdminGetConfigReqId:
+        return &protocol.AdminGetConfigReq{}
+    }
+    return nil
+}
+
+//AdminAddConfigReqId消息的回调函数
+func addConfigHandler(session *tcp.Session, pb proto.Message) {
+    req, ok := pb.(*protocol.AdminAddConfigReq)
+    if !ok {
+        log.Println("get AdminAddConfigReq pb error")
+        return
+    }
+    err := AddConfig(*req.ServiceKey, req.ConfKeys, req.Values)
+    rsp := protocol.AdminExecuteRsp{}
     if err != nil {
-        log.Fatalf("%s\n", err)
+        *rsp.Code = -1
+        *rsp.Error = err.Error()
+    } else {
+        *rsp.Code = 0
+        *rsp.Error = ""
+    }
+    //回包
+    session.SendData(protocol.AdminExecuteRspId, &rsp)
+}
+
+//AdminDelConfigReqId消息的回调函数
+func delConfigHandler(session *tcp.Session, pb proto.Message) {
+    req, ok := pb.(*protocol.AdminDelConfigReq)
+    if !ok {
+        log.Println("get AdminDelConfigReq pb error")
+        return
+    }
+    err := DelConfig(*req.ServiceKey, uint(*req.Version))
+    rsp := protocol.AdminExecuteRsp{}
+    if err != nil {
+        *rsp.Code = -1
+        *rsp.Error = err.Error()
+    } else {
+        *rsp.Code = 0
+        *rsp.Error = ""
+    }
+    //回包
+    session.SendData(protocol.AdminExecuteRspId, &rsp)
+}
+
+//检查两组配置是否有区别
+func isDifferent(k1 []string, v1 []string, k2 []string, v2 []string) bool {
+    if len(k1) != len(k2) {
+        return true//显然不同
+    }
+    kv1 := make(map[string]string)
+    kv2 := make(map[string]string)
+    for i := 0;i < len(k1);i++ {
+        k, v := k1[i], v1[i]
+        kv1[k] = v
+    }
+    for i := 0;i < len(k2);i++ {
+        k, v := k2[i], v2[i]
+        kv2[k] = v
+    }
+    for k := range kv1 {
+        if _, ok := kv2[k];ok {
+            if kv1[k] != kv2[k] {
+                return true
+            }
+        } else {
+            return true
+        }
+    }
+    return false
+}
+
+//AdminUpdConfigReqId消息的回调函数
+func updConfigHandler(session *tcp.Session, pb proto.Message) {
+    req, ok := pb.(*protocol.AdminUpdConfigReq)
+    if !ok {
+        log.Println("get AdminUpdConfigReq pb error")
+        return
+    }
+
+    rsp := protocol.AdminExecuteRsp{}
+
+    originKeys, originValues, version := ConfigData.GetData(*req.ServiceKey)
+    if version != uint(*req.Version) {
+        *rsp.Code = -1
+        *rsp.Error = "this service configure's version is wrong"
+        //回包
+        session.SendData(protocol.AdminExecuteRspId, &rsp)
+        return
+    }
+    //检查是否有改动
+    if !isDifferent(originKeys, originValues, req.ConfKeys, req.Values) {
+        *rsp.Code = -1
+        *rsp.Error = "no any changed"
+        //回包
+        session.SendData(protocol.AdminExecuteRspId, &rsp)
+        return
+    }
+
+    err := UpdateConfig(*req.ServiceKey, uint(*req.Version), req.ConfKeys, req.Values)
+
+    if err != nil {
+        *rsp.Code = -1
+        *rsp.Error = err.Error()
+    } else {
+        *rsp.Code = 0
+        *rsp.Error = ""
+    }
+    //回包
+    session.SendData(protocol.AdminExecuteRspId, &rsp)
+}
+
+//AdminGetConfigReqId消息的回调函数
+func getConfigHandler(session *tcp.Session, pb proto.Message) {
+    req, ok := pb.(*protocol.AdminGetConfigReq)
+    if !ok {
+        log.Println("get AdminGetConfigReq pb error")
+        return
+    }
+    rsp := protocol.AdminGetConfigRsp{}
+    rsp.ServiceKey = req.ServiceKey
+    confKeys, values, version := ConfigData.GetData(*req.ServiceKey)
+    if confKeys == nil {
+        //不存在
+        *rsp.Code = -1
+    } else {
+        *rsp.Code = 0
+        *rsp.Version = uint32(version)
+        rsp.ConfKeys = confKeys
+        rsp.Values = values
+    }
+    //回包
+    session.SendData(protocol.AdminGetConfigRspId, &rsp)
+}
+
+func StartAdminService() {
+    server, err := tcp.CreateServer("admin", "0.0.0.0", conf.GlobalConf.BrokerPort, uint32(conf.GlobalConf.AgentConnectionLimit))
+    if err != nil {
+        log.Println(err)
         os.Exit(1)
     }
-    log.Printf("create admin server(%s) successfully\n", fmt.Sprintf("0.0.0.0:%d", conf.GlobalConf.AdminPort))
-    defer listen.Close()
-
-    for {
-        conn, err := listen.AcceptTCP()
-        if err != nil {
-            log.Printf("%s\n", err)
-            os.Exit(1)
-        }
-        //处理请求
-        if atomic.LoadInt32(&numberOfConnections) < int32(conf.GlobalConf.AgentConnectionLimit) {
-            //TODO
-            //(conn)
-            log.Printf("current there are %d agent connections\n", numberOfConnections)
-        } else {
-            //直接关闭连接
-            conn.Close()
-            log.Println("connections is too much now")
-        }
-    }
+    AdminServer = server
+    //注册消息ID与PB的映射
+    AdminServer.SetMapping(adminMapping)
+    //注册所有回调
+    AdminServer.RegHandler(protocol.AdminAddConfigReqId, addConfigHandler)
+    AdminServer.RegHandler(protocol.AdminDelConfigReqId, delConfigHandler)
+    AdminServer.RegHandler(protocol.AdminUpdConfigReqId, updConfigHandler)
+    AdminServer.RegHandler(protocol.AdminGetConfigReqId, getConfigHandler)
+    //启动服务
+    AdminServer.Start()
 }

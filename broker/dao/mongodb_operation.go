@@ -6,6 +6,7 @@ import (
     "gopkg.in/mgo.v2"
     "gopkg.in/mgo.v2/bson"
     "sona/broker/conf"
+    "log"
 )
 
 type ConfigureDocument struct {
@@ -27,7 +28,7 @@ func getCollection() (*mgo.Session, *mgo.Collection) {
     collection := session.DB(conf.GlobalConf.DbName).C(conf.GlobalConf.DbCollectionName)
     if collection == nil {
         session.Close()
-        fmt.Printf("no database %s or collection %s\n", conf.GlobalConf.DbName, conf.GlobalConf.DbCollectionName)
+        log.Printf("no database %s or collection %s\n", conf.GlobalConf.DbName, conf.GlobalConf.DbCollectionName)
         return nil, nil
     }
     return session, collection
