@@ -1,0 +1,1 @@
+{"options":{},"indexes":[{"v":2,"key":{"_id":1},"name":"_id_","ns":"sona-configures.configures"},{"v":2,"unique":true,"key":{"serviceKey":1.0},"name":"serviceKey_1","ns":"sona-configures.configures"}],"uuid":"6372240eb6b749df88db0d2437258593"}
