@@ -7,7 +7,6 @@ import (
 )
 
 //周期性检查是否有待清理的serviceKey
-
 type AccessRecord struct {
     lastUseTime map[string]int64
     mutex sync.Mutex
