@@ -67,7 +67,7 @@ func (server *Server) Start() error {
     if server.mapping == nil {
         return errors.New("haven't set pb mapping yet")
     }
-
+    log.Printf("start %s server(%s) serivce\n", server.Name, fmt.Sprintf("%s:%d", server.Ip, server.Port))
     defer server.listen.Close()
 
     for {
