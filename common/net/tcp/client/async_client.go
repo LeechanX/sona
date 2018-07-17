@@ -76,10 +76,10 @@ func (c *AsyncClient) Connect() error {
     log.Printf("connecting to %s\n", fmt.Sprintf("%s:%d", c.Ip, c.Port))
     conn, err := net.DialTCP("tcp", nil, tcpAddr)
     if err != nil {
-        log.Printf("can's connect tcp address %s\n", fmt.Sprintf("%s:%d", c.Ip, c.Port))
+        log.Printf("can't connect tcp address %s\n", fmt.Sprintf("%s:%d", c.Ip, c.Port))
         return err
     }
-    log.Printf("connected to broker %s successfully\n", fmt.Sprintf("%s:%d", c.Ip, c.Port))
+    log.Printf("connected to %s successfully\n", fmt.Sprintf("%s:%d", c.Ip, c.Port))
     c.conn = conn
     //设置状态为已连接
     atomic.StoreInt32(&c.status, kConnStatusConnected)
@@ -94,6 +94,7 @@ func (c *AsyncClient) Connect() error {
 //等待连接关闭
 func (c *AsyncClient) Wait() {
     c.wg.Wait()
+    log.Printf("connection with %s is closed\n", c.Ip, c.Port)
 }
 
 //发送消息

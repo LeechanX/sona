@@ -13,7 +13,6 @@ func PullWhenStart() {
         req := &protocol.PullServiceConfigReq{}
         req.ServiceKey = &serviceKey
         *req.Version = uint32(serviceKeys[serviceKey])
-        //req.ServiceKey
         BrokerClient.Send(protocol.PullServiceConfigReqId, req)
     }
 }
@@ -24,7 +23,6 @@ func PeriodPulling() {
         time.Sleep(time.Second * 10)
         serviceKeys := ConfController.GetAllServiceKeys()
         for serviceKey := range serviceKeys {
-            //sleep 1s
             log.Printf("Periodic Pull Routine: try to update %s's configures\n", serviceKey)
             req := &protocol.PullServiceConfigReq{}
             req.ServiceKey = &serviceKey

@@ -62,6 +62,7 @@ func CreateServer(serviceName string, ip string, port int) (*Server, error) {
     }
     server.conn = conn
     server.sendQueue = make(chan *SendTask, 100)
+    server.hooks = make(map[uint]MsgHandler)
     return &server, nil
 }
 
