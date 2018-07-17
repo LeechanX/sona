@@ -11,8 +11,8 @@ import (
 
 //记录当前网络状态
 const (
-    kConnStatusConnected = int32(1)//正常连接
-    kConnStatusDisconnected = int32(2)//已断开
+    kConnStatusConnected = iota//正常连接
+    kConnStatusDisconnected//已断开
 )
 
 //待发送数据

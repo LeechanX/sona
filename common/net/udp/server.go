@@ -18,7 +18,7 @@ type SendTask struct {
 }
 
 const (
-    Opening = int32(0)
+    Opening = iota
     Closed
 )
 
