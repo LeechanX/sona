@@ -23,6 +23,30 @@ wechat: leechanx<br/>
 - 即使配置服务挂掉，也几乎不影响业务服务本身
 - 获取一个配置项的最新值和几乎和访问变量一样毫无成本，可以实时得到配置最新值
 
+## USGAE
+
+go语言业务：
+
+```
+import "sona/api"
+
+//获取service = nba.player.info的服务配置
+configApi, err := api.GetApi("nba.player.info")
+if err == nil {
+    defer configApi.Close()
+    //获取lebron-james.number值
+    value := configApi.Get("lebron-james","number")
+    fmt.Println("value is", value)
+
+    //获取lebron-james.friends值列表
+    list := configApi.GetList("lebron-james","friends")
+    for _, item := range list {
+        fmt.Println(item)
+    }
+}
+	
+```
+
 ## 架构
 
 TODO
@@ -30,4 +54,9 @@ TODO
 ## 安装
 
 TODO
+
+## TODO LIST
+更详细的日志
+测试全部功能
+broker高可用问题设计
 
