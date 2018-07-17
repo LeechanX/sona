@@ -118,9 +118,42 @@ func add(serviceKey string, client *client.SyncClient) {
         return
     }
     if *rsp.Code == 0 {
-        fmt.Println("Submit successfully")
+        fmt.Println("Add successfully")
     } else {
         fmt.Println(err)
+    }
+}
+
+func del(serviceKey string, client *client.SyncClient) {
+    serviceConf := get(serviceKey, client)
+    if serviceConf == nil {
+        return
+    }
+    fmt.Printf("Delete? (y/n): ")
+    var ensure string
+    fmt.Scanf("%s", &ensure)
+    if ensure == "y" || ensure == "Y" {
+        req := &protocol.AdminDelConfigReq{}
+        *req.ServiceKey = serviceKey
+        *req.Version = uint32(serviceConf.version)
+        err := client.Send(protocol.AdminDelConfigReqId, req)
+        if err != nil {
+            fmt.Println(err)
+            return
+        }
+        //接收 100ms超时
+        timeout := 100 * time.Millisecond
+        rsp := &protocol.AdminExecuteRsp{}
+        err = client.Read(timeout, protocol.AdminExecuteRspId, rsp)
+        if err != nil {
+            fmt.Println(err)
+            return
+        }
+        if *rsp.Code == 0 {
+            fmt.Println("Delete successfully")
+        } else {
+            fmt.Println(err)
+        }
     }
 }
 
@@ -219,7 +252,7 @@ func update(serviceKey string, client *client.SyncClient) {
 func main() {
     host := flag.String("host", "", "admin server ip")
     port := flag.Int("port", 0, "admin server port")
-    operation := flag.String("operation", "get", "[get],[add] or [update] configures")
+    operation := flag.String("operation", "get", "[get],[add] or [update],[delete] configures")
 
     flag.Parse()
 
@@ -227,8 +260,8 @@ func main() {
         fmt.Println("no host or port is specified")
         return
     }
-    if *operation != "get" && *operation != "add" && *operation != "update" {
-        fmt.Println("only support operations: [get],[add] or [update]")
+    if *operation != "get" && *operation != "add" && *operation != "update" && *operation != "delete" {
+        fmt.Println("only support operations: [get],[add] or [update],[delete]")
         return
     }
 
@@ -256,7 +289,9 @@ func main() {
         get(serviceKey, client)
     } else if *operation == "add" {
         add(serviceKey, client)
-    } else {
+    } else if *operation == "update" {
         update(serviceKey, client)
+    } else {
+        del(serviceKey, client)
     }
 }
