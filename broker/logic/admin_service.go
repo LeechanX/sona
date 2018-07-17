@@ -49,6 +49,7 @@ func UpdateConfig(serviceKey string, version uint, configKeys []string, values [
     if len(agents) == 0 {
         return nil
     }
+    log.Printf("debug: push updated data %s\n", serviceKey)
     //创建推送包
     pushReq := protocol.PushServiceConfigReq{
         ServiceKey:&serviceKey,
@@ -74,6 +75,7 @@ func DelConfig(serviceKey string, version uint) error {
     if len(agents) == 0 {
         return nil
     }
+    log.Printf("debug: push deleted data %s\n", serviceKey)
     //创建推送包
     pushReq := protocol.PushServiceConfigReq{
         ServiceKey:&serviceKey,
@@ -104,6 +106,7 @@ func adminMapping(cmdId uint) proto.Message {
 
 //AdminAddConfigReqId消息的回调函数
 func addConfigHandler(session *tcp.Session, pb proto.Message) {
+    log.Println("debug: into add config callback")
     req, ok := pb.(*protocol.AdminAddConfigReq)
     if !ok {
         log.Println("get AdminAddConfigReq pb error")
@@ -124,6 +127,7 @@ func addConfigHandler(session *tcp.Session, pb proto.Message) {
 
 //AdminDelConfigReqId消息的回调函数
 func delConfigHandler(session *tcp.Session, pb proto.Message) {
+    log.Println("debug: into delete config callback")
     req, ok := pb.(*protocol.AdminDelConfigReq)
     if !ok {
         log.Println("get AdminDelConfigReq pb error")
@@ -171,6 +175,7 @@ func isDifferent(k1 []string, v1 []string, k2 []string, v2 []string) bool {
 
 //AdminUpdConfigReqId消息的回调函数
 func updConfigHandler(session *tcp.Session, pb proto.Message) {
+    log.Println("debug: into update config callback")
     req, ok := pb.(*protocol.AdminUpdConfigReq)
     if !ok {
         log.Println("get AdminUpdConfigReq pb error")

@@ -18,10 +18,10 @@ type ConfigureDocument struct {
 
 //获取collection以便操作
 func getCollection() (*mgo.Session, *mgo.Collection) {
-    url := fmt.Sprintf("%s/%d", conf.GlobalConf.DbHost, conf.GlobalConf.DbPort)
+    url := fmt.Sprintf("%s:%d", conf.GlobalConf.DbHost, conf.GlobalConf.DbPort)
     session, err := mgo.Dial(url)
     if err != nil {
-        fmt.Printf("%s\n", err)
+        log.Printf("dial mongodb %s get %s\n", url, err)
         return nil, nil
     }
 
@@ -36,6 +36,7 @@ func getCollection() (*mgo.Session, *mgo.Collection) {
 
 //加载所有数据
 func ReloadAllData() ([]*ConfigureDocument, error) {
+    log.Println("reload data from mongo db")
     session, collection := getCollection()
     if collection == nil {
         return nil, errors.New("database error")

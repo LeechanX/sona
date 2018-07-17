@@ -1,6 +1,7 @@
 package logic
 
 import (
+    "log"
     "sync"
     "errors"
     "sona/broker/dao"
@@ -58,11 +59,13 @@ func (cfd *ConfigureData) Reset() error {
 
 //新增配置操作
 func (cfd *ConfigureData) AddConfig(serviceKey string, configKeys []string, values []string) (uint, error) {
+    log.Println("debug: run add config operation")
     var version uint
     cfd.rwMutex.Lock()
     _, ok := cfd.data[serviceKey]
     if !ok {
         //在本地内存中先预先新增
+        log.Println("debug: pre-save and set status = kStatusEditing")
         cfd.data[serviceKey] = &ServiceData{}
         cfd.data[serviceKey].version = 0
         cfd.data[serviceKey].serviceKey = serviceKey
@@ -73,14 +76,17 @@ func (cfd *ConfigureData) AddConfig(serviceKey string, configKeys []string, valu
         if len(cfd.data[serviceKey].confKeys) == 0 {
             //原有记录已被删除，可以被新增，检查是否在编辑中
             if cfd.data[serviceKey].status == kStatusEditing {
+                log.Println("debug: another user is editing this configure")
                 cfd.rwMutex.Unlock()
                 return 0, errors.New("this service configure is in editing")
             } else {
                 //标记为正在编辑
+                log.Println("debug: mark kStatusEditing")
                 cfd.data[serviceKey].status = kStatusEditing
                 cfd.rwMutex.Unlock()
             }
         } else {
+            log.Println("debug: data is exist")
             //已存在
             cfd.rwMutex.Unlock()
             return 0, errors.New("this service configure is already exist")
@@ -90,19 +96,24 @@ func (cfd *ConfigureData) AddConfig(serviceKey string, configKeys []string, valu
         version += 1
     }
     //执行mongodb新增
+    log.Println("debug: run add document in mongodb")
     err := dao.AddDocument(serviceKey, version, configKeys, values)
     cfd.rwMutex.Lock()
     defer cfd.rwMutex.Unlock()
     if err != nil {
+        log.Println("debug: mongodb add error")
         //执行失败，回退
         //如果是刚添加的，则在内存中删除之
         if version != 0 {
+            log.Println("debug: delete from broker memory")
             delete(cfd.data, serviceKey)
         } else {
+            log.Println("debug: remark to kStatusIdle")
             //否则重置空闲状态
             cfd.data[serviceKey].status = kStatusIdle
         }
     } else {
+        log.Println("debug: add ok and remark kStatusIdle")
         //执行成功
         cfd.data[serviceKey].confKeys = configKeys
         cfd.data[serviceKey].values = values
@@ -123,22 +134,26 @@ func (cfd *ConfigureData) UpdateData(serviceKey string, version uint, configKeys
     _, ok := cfd.data[serviceKey]
     if ok {
         if cfd.data[serviceKey].version != version {
-            //正在编辑中
+            //版本对不上号
+            log.Println("debug: version is not equal")
             cfd.rwMutex.Unlock()
             return 0, errors.New("this service configure's version is wrong")
         } else {
             if cfd.data[serviceKey].status == kStatusEditing {
-                //版本不对
+                //正在编辑中
+                log.Println("debug: another user is editing this configure")
                 cfd.rwMutex.Unlock()
                 return 0, errors.New("this service configure is in editing")
             } else {
                 //标记为正在编辑
+                log.Println("debug: mark kStatusEditing")
                 cfd.data[serviceKey].status = kStatusEditing
                 cfd.rwMutex.Unlock()
             }
         }
     } else {
         //不存在
+        log.Println("debug: not exist")
         cfd.rwMutex.Unlock()
         return 0, errors.New("this service configure is not exist")
     }
@@ -146,10 +161,12 @@ func (cfd *ConfigureData) UpdateData(serviceKey string, version uint, configKeys
     //在mongodb中执行删除, 即把配置内容设置为空
     //版本+1
     version += 1
+    log.Println("debug: run update document in mongodb")
     err := dao.UpdateDocument(serviceKey, version, configKeys, values)
     cfd.rwMutex.Lock()
     defer cfd.rwMutex.Unlock()
     if err == nil {
+        log.Println("debug: mongodb update ok")
         //mongodb操作成功, 更新内存
         //更新版本
         cfd.data[serviceKey].version = version
@@ -157,6 +174,7 @@ func (cfd *ConfigureData) UpdateData(serviceKey string, version uint, configKeys
         cfd.data[serviceKey].confKeys = []string{}
         cfd.data[serviceKey].values = []string{}
     }
+    log.Println("debug: mark kStatusIdle")
     //在内存中标记空闲
     cfd.data[serviceKey].status = kStatusIdle
     return version, nil

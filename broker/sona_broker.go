@@ -15,6 +15,8 @@ func main() {
     if err != nil {
         log.Printf("load data from mongodb: %s\n", err)
         return
+    } else {
+        log.Println("load data from mongodb ok")
     }
     //启动broker server服务于agent
     go logic.StartBrokerService()
