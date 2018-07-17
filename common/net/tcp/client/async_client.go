@@ -26,9 +26,9 @@ type SendTask struct {
 //消息ID与消息PB的映射函数类型
 type PBMapping func (uint) proto.Message
 //遇到某消息ID的回调函数类型
-type MsgHandler func (*Client, proto.Message)
+type MsgHandler func (*AsyncClient, proto.Message)
 
-type Client struct {
+type AsyncClient struct {
     Ip string
     Port int
     conn *net.TCPConn
@@ -41,8 +41,8 @@ type Client struct {
 }
 
 //创建一个client结构体
-func CreateClient(ip string, port int) *Client {
-    return &Client{
+func CreateClient(ip string, port int) *AsyncClient {
+    return &AsyncClient{
         Ip:ip,
         Port:port,
         conn:nil,
@@ -54,17 +54,17 @@ func CreateClient(ip string, port int) *Client {
 }
 
 //设置消息ID与消息PB的映射函数
-func (c *Client) SetMapping(m PBMapping) {
+func (c *AsyncClient) SetMapping(m PBMapping) {
     c.mapping = m
 }
 
 //设置消息ID对应的回调
-func (c *Client) RegHandler(cmdId uint, handler MsgHandler) {
+func (c *AsyncClient) RegHandler(cmdId uint, handler MsgHandler) {
     c.hooks[cmdId] = handler
 }
 
 //执行连接
-func (c *Client) Connect() error {
+func (c *AsyncClient) Connect() error {
     if c.mapping == nil {
         return errors.New("haven't set pb mapping yet")
     }
@@ -92,12 +92,12 @@ func (c *Client) Connect() error {
 }
 
 //等待连接关闭
-func (c *Client) Wait() {
+func (c *AsyncClient) Wait() {
     c.wg.Wait()
 }
 
 //发送消息
-func (c *Client) Send(cmdId uint, pb proto.Message) bool {
+func (c *AsyncClient) Send(cmdId uint, pb proto.Message) bool {
     if atomic.LoadInt32(&c.status) == kConnStatusConnected {
         c.sendQueue<- &SendTask{
             cmdId:cmdId,
@@ -109,7 +109,7 @@ func (c *Client) Send(cmdId uint, pb proto.Message) bool {
 }
 
 //关闭连接
-func (c *Client) close() {
+func (c *AsyncClient) close() {
     if !atomic.CompareAndSwapInt32(&c.status, kConnStatusConnected, kConnStatusDisconnected) {
         log.Println("already closed the connection")
         return
@@ -122,7 +122,7 @@ func (c *Client) close() {
 }
 
 //读取消息
-func (c *Client) receiver() {
+func (c *AsyncClient) receiver() {
     defer func() {
         //可能是网络出错，于是调用CloseConnect会主动关闭连接
         //也可能是其他G关闭了连接，这时调用Close将什么也不干
@@ -155,7 +155,7 @@ func (c *Client) receiver() {
 }
 
 //发消息
-func (c *Client) sender() {
+func (c *AsyncClient) sender() {
     defer func() {
         //可能是网络出错，于是调用CloseConnect会主动关闭连接
         //也可能是其他G关闭了连接，这时调用CloseConnect将什么也不干
