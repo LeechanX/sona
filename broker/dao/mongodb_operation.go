@@ -49,8 +49,13 @@ func ReloadAllData() ([]*ConfigureDocument, error) {
     }
 
     data := make([]*ConfigureDocument, 0)
+    /* 错误，result变量仅被创建了一次，导致&result一直指向同样的变量
     for _, result := range results {
         data = append(data, &result)
+    }
+    */
+    for i := 0;i < len(results);i++ {
+        data = append(data, &results[i])
     }
     return data, nil
 }
