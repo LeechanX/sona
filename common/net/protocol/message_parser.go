@@ -4,6 +4,7 @@ import (
     "io"
     "net"
     "fmt"
+    "time"
     "bytes"
     "errors"
     "encoding/binary"
@@ -82,7 +83,9 @@ func DecodeTCPMessage(conn *net.TCPConn) (uint, []byte, error) {
             "receive from tcp data format error, length %d\n", head.Length))
     }
     bodyLength := head.Length - HeadBytes
-    //再读取body
+
+    //再读取body 这里最好设置50ms超时，因为包头已经来了，包身不应该太久不来
+    conn.SetReadDeadline(time.Now().Add(50 * time.Millisecond))
     _, err = io.ReadFull(conn, data[:bodyLength])
     if err != nil {
         return 0, nil, err

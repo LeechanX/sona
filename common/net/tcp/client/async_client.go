@@ -41,7 +41,7 @@ type AsyncClient struct {
 }
 
 //创建一个client结构体
-func CreateClient(ip string, port int) *AsyncClient {
+func CreateAsyncClient(ip string, port int) *AsyncClient {
     return &AsyncClient{
         Ip:ip,
         Port:port,

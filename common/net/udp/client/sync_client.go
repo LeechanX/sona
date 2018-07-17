@@ -47,7 +47,6 @@ func (c *Client) Read(timeout time.Duration, cmdId uint, packet proto.Message) e
     return nil
 }
 
-
 //发消息
 func (c *Client) Send(cmdId uint, pb proto.Message) error {
     data := protocol.EncodeMessage(cmdId, pb)
