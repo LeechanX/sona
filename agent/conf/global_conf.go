@@ -26,7 +26,7 @@ func LoadGlobalConfig() {
     }
 
     if !cfg.HasSection("broker") {
-        log.Panicln("configure has no section: broker")
+        log.Println("configure has no section: broker")
         os.Exit(1)
     }
     GlobalConf.BrokerIp, err = cfg.String("broker", "ip")
@@ -41,7 +41,7 @@ func LoadGlobalConfig() {
     }
 
     if !cfg.HasSection("agent") {
-        log.Panicln("configure has no section: agent")
+        log.Println("configure has no section: agent")
         os.Exit(1)
     }
     GlobalConf.AgentPort, err = cfg.Int("agent", "port")
