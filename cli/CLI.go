@@ -10,6 +10,7 @@ import (
     "sona/core"
     "sona/protocol"
     "sona/common/net/tcp/client"
+    "github.com/golang/protobuf/proto"
 )
 
 type ServiceConfig struct {
@@ -21,8 +22,8 @@ type ServiceConfig struct {
 func parseCommand(line string) []string {
     result := make([]string, 0)
     line = strings.Trim(line, " ")
-    line_attrs := strings.Split(line, " ")
-    for _, attr := range line_attrs {
+    lineAttrs := strings.Split(line, " ")
+    for _, attr := range lineAttrs {
         result = append(result, strings.Trim(attr, " "))
     }
     return result
@@ -30,7 +31,7 @@ func parseCommand(line string) []string {
 
 func get(serviceKey string, client *client.SyncClient) *ServiceConfig {
     req := &protocol.AdminGetConfigReq{}
-    req.ServiceKey = &serviceKey
+    req.ServiceKey = proto.String(serviceKey)
 
     err := client.Send(protocol.AdminGetConfigReqId, req)
     if err != nil {
@@ -99,7 +100,7 @@ func add(serviceKey string, client *client.SyncClient) {
 
     //send add request
     req := &protocol.AdminAddConfigReq{}
-    req.ServiceKey = &serviceKey
+    req.ServiceKey = proto.String(serviceKey)
     req.ConfKeys = confKeys
     req.Values = confValues
 
@@ -134,8 +135,8 @@ func del(serviceKey string, client *client.SyncClient) {
     fmt.Scanf("%s", &ensure)
     if ensure == "y" || ensure == "Y" {
         req := &protocol.AdminDelConfigReq{}
-        *req.ServiceKey = serviceKey
-        *req.Version = uint32(serviceConf.version)
+        req.ServiceKey = proto.String(serviceKey)
+        req.Version = proto.Uint32(uint32(serviceConf.version))
         err := client.Send(protocol.AdminDelConfigReqId, req)
         if err != nil {
             fmt.Println(err)
@@ -211,8 +212,8 @@ func update(serviceKey string, client *client.SyncClient) {
     fmt.Println()
     //build PB
     req := &protocol.AdminUpdConfigReq{}
-    req.ServiceKey = &serviceConf.serviceKey
-    *req.Version = uint32(serviceConf.version)
+    req.ServiceKey = proto.String(serviceConf.serviceKey)
+    req.Version = proto.Uint32(uint32(serviceConf.version))
     req.ConfKeys = make([]string, 0)
     req.Values = make([]string, 0)
 
@@ -266,7 +267,7 @@ func main() {
     }
 
     //connect to admin server
-    client, err := client.CreateSyncClient(*host, *port)
+    cli, err := client.CreateSyncClient(*host, *port)
     if err != nil {
         fmt.Println(err)
         return
@@ -286,12 +287,12 @@ func main() {
     }
 
     if *operation == "get" {
-        get(serviceKey, client)
+        get(serviceKey, cli)
     } else if *operation == "add" {
-        add(serviceKey, client)
+        add(serviceKey, cli)
     } else if *operation == "update" {
-        update(serviceKey, client)
+        update(serviceKey, cli)
     } else {
-        del(serviceKey, client)
+        del(serviceKey, cli)
     }
 }

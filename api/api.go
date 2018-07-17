@@ -7,6 +7,7 @@ import (
     "sona/core"
     "sona/protocol"
     "sona/common/net/udp/client"
+    "github.com/golang/protobuf/proto"
 )
 
 type SonaApi struct {
@@ -55,7 +56,7 @@ func (api *SonaApi) subscribe(serviceKey string) error {
     }
     //发起订阅消息
     req := &protocol.SubscribeReq{}
-    req.ServiceKey = &serviceKey
+    req.ServiceKey = proto.String(serviceKey)
     err := api.udpClient.Send(protocol.SubscribeReqId, req)
     if err != nil {
         return err

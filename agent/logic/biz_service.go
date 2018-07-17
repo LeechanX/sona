@@ -15,8 +15,9 @@ func KeepUsingHandler(_ *udp.Server, _ *net.UDPAddr, pb proto.Message) {
     if !ConfController.IsServiceExist(*req.ServiceKey) {
         //发送给broker拉取goroutine：拉取此配置
         pullReq := protocol.PullServiceConfigReq{}
-        pullReq.ServiceKey = req.ServiceKey
-        *pullReq.Version = 0
+        pullReq.ServiceKey = proto.String(*req.ServiceKey)
+        pullReq.Version = proto.Uint32(0)
+
         BrokerClient.Send(protocol.PullServiceConfigReqId, &pullReq)
     } else {
         //否则更新本地时间戳
@@ -31,8 +32,8 @@ func SubscribeReqHandler(server *udp.Server, addr *net.UDPAddr, pb proto.Message
     if ConfController.IsServiceExist(*req.ServiceKey) {
         //本地已经有了，则回复
         rsp := &protocol.SubscribeAgentRsp{}
-        *rsp.Code = 0
-        rsp.ServiceKey = req.ServiceKey
+        rsp.Code = proto.Int32(0)
+        rsp.ServiceKey = proto.String(*req.ServiceKey)
         server.Send(protocol.SubscribeAgentRspId, rsp, addr)
     } else {
         //否则发送给broker拉取goroutine：去Broker订阅此配置

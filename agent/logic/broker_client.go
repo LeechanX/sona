@@ -32,8 +32,8 @@ func SubscribeResultHandler(_ *client.AsyncClient, pb proto.Message) {
         ConfController.UpdateService(*req.ServiceKey, uint(*req.Version), req.ConfKeys, req.Values)
     }
     rsp := &protocol.SubscribeAgentRsp{}
-    rsp.ServiceKey = req.ServiceKey
-    rsp.Code = req.Code
+    rsp.ServiceKey = proto.String(*req.ServiceKey)
+    rsp.Code = proto.Int32(*req.Code)
     //可能需要回复给biz
     //获取并删除UDP地址
     addrList := BizServer.SubscribeBook.GetSubscribers(*rsp.ServiceKey, true)

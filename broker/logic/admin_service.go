@@ -26,11 +26,11 @@ func AddConfig(serviceKey string, configKeys []string, values []string) error {
     }
     //创建推送包
     pushReq := protocol.PushServiceConfigReq{
-        ServiceKey:&serviceKey,
+        ServiceKey:proto.String(serviceKey),
+        Version:proto.Uint32(uint32(newVersion)),
         ConfKeys:configKeys,
         Values:values,
     }
-    *pushReq.Version = uint32(newVersion)
     for _, agent := range agents {
         agent.SendData(protocol.PushServiceConfigReqId, &pushReq)
     }
@@ -52,11 +52,12 @@ func UpdateConfig(serviceKey string, version uint, configKeys []string, values [
     log.Printf("debug: push updated data %s\n", serviceKey)
     //创建推送包
     pushReq := protocol.PushServiceConfigReq{
-        ServiceKey:&serviceKey,
+        ServiceKey:proto.String(serviceKey),
+        Version:proto.Uint32(uint32(newVersion)),
         ConfKeys:configKeys,
         Values:values,
     }
-    *pushReq.Version = uint32(newVersion)
+    pushReq.Version = proto.Uint32(uint32(newVersion))
     for _, agent := range agents {
         agent.SendData(protocol.PushServiceConfigReqId, &pushReq)
     }
@@ -78,11 +79,11 @@ func DelConfig(serviceKey string, version uint) error {
     log.Printf("debug: push deleted data %s\n", serviceKey)
     //创建推送包
     pushReq := protocol.PushServiceConfigReq{
-        ServiceKey:&serviceKey,
+        ServiceKey:proto.String(serviceKey),
         ConfKeys:[]string{},
         Values:[]string{},
     }
-    *pushReq.Version = uint32(newVersion)
+    pushReq.Version = proto.Uint32(uint32(newVersion))
     for _, agent := range agents {
         agent.SendData(protocol.PushServiceConfigReqId, &pushReq)
     }
@@ -115,11 +116,11 @@ func addConfigHandler(session *tcp.Session, pb proto.Message) {
     err := AddConfig(*req.ServiceKey, req.ConfKeys, req.Values)
     rsp := protocol.AdminExecuteRsp{}
     if err != nil {
-        *rsp.Code = -1
-        *rsp.Error = err.Error()
+        rsp.Code = proto.Int32(-1)
+        rsp.Error = proto.String(err.Error())
     } else {
-        *rsp.Code = 0
-        *rsp.Error = ""
+        rsp.Code = proto.Int32(0)
+        rsp.Error = proto.String("")
     }
     //回包
     session.SendData(protocol.AdminExecuteRspId, &rsp)
@@ -136,11 +137,11 @@ func delConfigHandler(session *tcp.Session, pb proto.Message) {
     err := DelConfig(*req.ServiceKey, uint(*req.Version))
     rsp := protocol.AdminExecuteRsp{}
     if err != nil {
-        *rsp.Code = -1
-        *rsp.Error = err.Error()
+        rsp.Code = proto.Int32(-1)
+        rsp.Error = proto.String(err.Error())
     } else {
-        *rsp.Code = 0
-        *rsp.Error = ""
+        rsp.Code = proto.Int32(0)
+        rsp.Error = proto.String("")
     }
     //回包
     session.SendData(protocol.AdminExecuteRspId, &rsp)
@@ -186,16 +187,16 @@ func updConfigHandler(session *tcp.Session, pb proto.Message) {
 
     originKeys, originValues, version := ConfigData.GetData(*req.ServiceKey)
     if version != uint(*req.Version) {
-        *rsp.Code = -1
-        *rsp.Error = "this service configure's version is wrong"
+        rsp.Code = proto.Int32(-1)
+        rsp.Error = proto.String("this service configure's version is wrong")
         //回包
         session.SendData(protocol.AdminExecuteRspId, &rsp)
         return
     }
     //检查是否有改动
     if !isDifferent(originKeys, originValues, req.ConfKeys, req.Values) {
-        *rsp.Code = -1
-        *rsp.Error = "no any changed"
+        rsp.Code = proto.Int32(-1)
+        rsp.Error = proto.String("no any changed")
         //回包
         session.SendData(protocol.AdminExecuteRspId, &rsp)
         return
@@ -204,11 +205,11 @@ func updConfigHandler(session *tcp.Session, pb proto.Message) {
     err := UpdateConfig(*req.ServiceKey, uint(*req.Version), req.ConfKeys, req.Values)
 
     if err != nil {
-        *rsp.Code = -1
-        *rsp.Error = err.Error()
+        rsp.Code = proto.Int32(-1)
+        rsp.Error = proto.String(err.Error())
     } else {
-        *rsp.Code = 0
-        *rsp.Error = ""
+        rsp.Code = proto.Int32(0)
+        rsp.Error = proto.String("")
     }
     //回包
     session.SendData(protocol.AdminExecuteRspId, &rsp)
@@ -216,20 +217,22 @@ func updConfigHandler(session *tcp.Session, pb proto.Message) {
 
 //AdminGetConfigReqId消息的回调函数
 func getConfigHandler(session *tcp.Session, pb proto.Message) {
+    log.Println("debug: into get config callback")
     req, ok := pb.(*protocol.AdminGetConfigReq)
     if !ok {
         log.Println("get AdminGetConfigReq pb error")
         return
     }
     rsp := protocol.AdminGetConfigRsp{}
-    rsp.ServiceKey = req.ServiceKey
+    rsp.ServiceKey = proto.String(*req.ServiceKey)
     confKeys, values, version := ConfigData.GetData(*req.ServiceKey)
     if confKeys == nil {
         //不存在
-        *rsp.Code = -1
+        rsp.Code = proto.Int32(-1)
+        rsp.Version = proto.Uint32(0)
     } else {
-        *rsp.Code = 0
-        *rsp.Version = uint32(version)
+        rsp.Code = proto.Int32(0)
+        rsp.Version = proto.Uint32(uint32(version))
         rsp.ConfKeys = confKeys
         rsp.Values = values
     }

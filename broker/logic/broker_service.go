@@ -34,15 +34,16 @@ func SubscribeHandler(session *tcp.Session, pb proto.Message) {
     session.Subscribe(*req.ServiceKey)
     //创建回包
     rsp := protocol.SubscribeBrokerRsp{}
-    rsp.ServiceKey = req.ServiceKey
+    rsp.ServiceKey = proto.String(*req.ServiceKey)
     //查看是否有此配置
     keys, values, version := ConfigData.GetData(*req.ServiceKey)
     if keys == nil {
-        *rsp.Code = -1//订阅失败
+        rsp.Code = proto.Int32(-1)//订阅失败
+        rsp.Version = proto.Uint32(0)
     } else {
-        *rsp.Code = 0//订阅成功
+        rsp.Code = proto.Int32(0)//订阅成功
         //填充配置
-        *rsp.Version = uint32(version)
+        rsp.Version = proto.Uint32(uint32(version))
         rsp.ConfKeys = keys
         rsp.Values = values
     }
@@ -61,11 +62,11 @@ func PullConfigHandler(session *tcp.Session, pb proto.Message) {
     session.Subscribe(*req.ServiceKey)
     //创建回包
     rsp := protocol.PullServiceConfigRsp{}
-    rsp.ServiceKey = req.ServiceKey
+    rsp.ServiceKey = proto.String(*req.ServiceKey)
 
     //查看是否有此配置 (必然有)
     keys, values, version := ConfigData.GetData(*req.ServiceKey)
-    *rsp.Version = uint32(version)
+    rsp.Version = proto.Uint32(uint32(version))
     if version > uint(*req.Version) {
         //agent端的版本过时了
         rsp.ConfKeys = keys

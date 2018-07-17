@@ -50,6 +50,7 @@ func (cfd *ConfigureData) Reset() error {
             values:doc.ConfValues,
         }
         newData[doc.ServiceKey] = serviceData
+        log.Println("debug: data: ",doc.ServiceKey)
     }
     ConfigData.rwMutex.Lock()
     cfd.data = newData
