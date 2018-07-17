@@ -65,7 +65,7 @@ func PullResultHandler(_ *client.AsyncClient, pb proto.Message) {
 }
 
 func CreateBrokerClient(ip string, port int) *client.AsyncClient {
-    client := client.CreateClient(ip, port)
+    client := client.CreateAsyncClient(ip, port)
     client.SetMapping(brokerClientMapping)
     //安装回调
     client.RegHandler(protocol.SubscribeBrokerRspId, SubscribeResultHandler)
