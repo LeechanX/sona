@@ -17,14 +17,14 @@ const (
 )
 
 type MsgHead struct {
-    CmdId uint
+    CmdId uint32//必须是明确字节数的类型，不然buf.Read可能有问题
     Length uint32
 }
 
 func EncodeMessage(cmdId uint, pb proto.Message) []byte {
     //create head
     head := MsgHead{
-        CmdId: cmdId,
+        CmdId: uint32(cmdId),
         Length: HeadBytes,
     }
     //create body
@@ -61,7 +61,7 @@ func DecodeUDPMessage(conn *net.UDPConn) (uint, *net.UDPAddr, []byte, error) {
         return 0, nil, nil, errors.New(fmt.Sprintf(
             "receive from udp data format error, length %d\n", head.Length))
     }
-    return head.CmdId, cliAddr, data[HeadBytes:], nil
+    return uint(head.CmdId), cliAddr, data[HeadBytes:], nil
 }
 
 func DecodeTCPMessage(conn *net.TCPConn) (uint, []byte, error) {
@@ -90,5 +90,5 @@ func DecodeTCPMessage(conn *net.TCPConn) (uint, []byte, error) {
     if err != nil {
         return 0, nil, err
     }
-    return head.CmdId, data[:bodyLength], nil
+    return uint(head.CmdId), data[:bodyLength], nil
 }
