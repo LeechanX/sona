@@ -12,7 +12,7 @@ import (
 //记录当前网络状态
 const (
     kConnStatusConnected = int32(1)//正常连接
-    kConnStatusDisconnected//已断开
+    kConnStatusDisconnected = int32(2)//已断开
 )
 
 //待发送数据
@@ -34,6 +34,7 @@ type Session struct {
 
 //创建会话
 func CreateSession(server *Server, c *net.TCPConn) {
+    log.Println("call this")
     session := Session{
         status:kConnStatusConnected,
         conn:c,
@@ -42,6 +43,7 @@ func CreateSession(server *Server, c *net.TCPConn) {
         server:server,
     }
     //当前连接数+1
+    log.Println("connection count + 1")
     atomic.AddInt32(&session.server.NumberOfConnections, 1)
     //启动发送G
     go session.sender()
@@ -63,8 +65,7 @@ func (session *Session) IsClosed() bool {
 
 //关闭连接
 func (session *Session) Close() {
-    if !atomic.CompareAndSwapInt32(&session.status, kConnStatusConnected,
-         kConnStatusDisconnected) {
+    if !atomic.CompareAndSwapInt32(&session.status, kConnStatusConnected, kConnStatusDisconnected) {
         //已被关闭过
         return
     }
@@ -76,6 +77,7 @@ func (session *Session) Close() {
     //为防止写channel产生panic，不关闭channel，仅发nil
     session.sendQueue<- nil
     session.conn.Close()
+    log.Println("connction count - 1")
     atomic.AddInt32(&session.server.NumberOfConnections, -1)
 }
 
