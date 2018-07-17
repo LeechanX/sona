@@ -252,7 +252,7 @@ func update(serviceKey string, client *client.SyncClient) {
 func main() {
     host := flag.String("host", "", "admin server ip")
     port := flag.Int("port", 0, "admin server port")
-    operation := flag.String("operation", "get", "[get],[add] or [update],[delete] configures")
+    operation := flag.String("operation", "", "[get],[add] or [update],[delete] configures")
 
     flag.Parse()
 
