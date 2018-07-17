@@ -16,6 +16,7 @@ type SonaApi struct {
 }
 
 func GetApi(serviceKey string) (*SonaApi, error) {
+    serviceKey = strings.Trim(serviceKey, " ")
     if !core.IsValidityServiceKey(serviceKey) {
         return nil, errors.New("not a valid sona service key")
     }
@@ -80,6 +81,8 @@ func (api *SonaApi) subscribe(serviceKey string) error {
 
 //获取value
 func (api *SonaApi) Get(section string, key string) string {
+    section = strings.Trim(section, " ")
+    key = strings.Trim(key, " ")
     confKey := section + "." + key
     if !core.IsValidityConfKey(confKey) {
         return ""
