@@ -10,8 +10,10 @@ import (
 type GlobalConfigure struct {
     BrokerPort int
     AdminPort int
-    //agent连接个数限制
-    AgentConnectionLimit int
+    //broker连接个数限制
+    BrokerConnectionLimit int
+    //admin连接个数限制
+    AdminConnectionLimit int
     DbHost string
     DbPort int
     DbName string
@@ -31,7 +33,7 @@ func LoadGlobalConfig() {
     }
 
     if !cfg.HasSection("broker") {
-        log.Panicln("configure has no section: broker")
+        log.Println("configure has no section: broker")
         os.Exit(1)
     }
     GlobalConf.BrokerPort, err = cfg.Int("broker", "port")
@@ -40,14 +42,13 @@ func LoadGlobalConfig() {
         os.Exit(1)
     }
 
-    GlobalConf.AgentConnectionLimit, err = cfg.Int("broker", "connection-limit")
+    GlobalConf.BrokerConnectionLimit, err = cfg.Int("broker", "connection-limit")
     if err != nil {
-        log.Printf("configure broker-ConnectionLimit format error: %s\n", err)
-        os.Exit(1)
+        GlobalConf.BrokerConnectionLimit = 1000
     }
 
     if !cfg.HasSection("admin") {
-        log.Panicln("configure has no section: broker")
+        log.Println("configure has no section: broker")
         os.Exit(1)
     }
     GlobalConf.AdminPort, err = cfg.Int("admin", "port")
@@ -56,8 +57,13 @@ func LoadGlobalConfig() {
         os.Exit(1)
     }
 
+    GlobalConf.AdminConnectionLimit, err = cfg.Int("admin", "connection-limit")
+    if err != nil {
+        GlobalConf.AdminConnectionLimit = 100
+    }
+
     if !cfg.HasSection("db") {
-        log.Panicln("configure has no section: broker")
+        log.Println("configure has no section: broker")
         os.Exit(1)
     }
 

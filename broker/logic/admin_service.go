@@ -233,7 +233,7 @@ func getConfigHandler(session *tcp.Session, pb proto.Message) {
 }
 
 func StartAdminService() {
-    server, err := tcp.CreateServer("admin", "0.0.0.0", conf.GlobalConf.BrokerPort, uint32(conf.GlobalConf.AgentConnectionLimit))
+    server, err := tcp.CreateServer("admin", "0.0.0.0", conf.GlobalConf.AdminPort, uint32(conf.GlobalConf.AdminConnectionLimit))
     if err != nil {
         log.Println(err)
         os.Exit(1)

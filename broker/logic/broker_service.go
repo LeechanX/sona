@@ -76,7 +76,7 @@ func PullConfigHandler(session *tcp.Session, pb proto.Message) {
 }
 
 func StartBrokerService() {
-    server, err := tcp.CreateServer("broker", "0.0.0.0", conf.GlobalConf.BrokerPort, uint32(conf.GlobalConf.AgentConnectionLimit))
+    server, err := tcp.CreateServer("broker", "0.0.0.0", conf.GlobalConf.BrokerPort, uint32(conf.GlobalConf.BrokerConnectionLimit))
     if err != nil {
         log.Println(err)
         os.Exit(1)
