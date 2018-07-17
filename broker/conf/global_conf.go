@@ -26,7 +26,7 @@ func LoadGlobalConfig() {
     //加载配置文件
     cfg, err := config.ReadDefault(*cfgPath)
     if err != nil {
-        log.Panicf("load configure path error: %s\n", err)
+        log.Printf("load configure path error: %s\n", err)
         os.Exit(1)
     }
 
@@ -36,13 +36,13 @@ func LoadGlobalConfig() {
     }
     GlobalConf.BrokerPort, err = cfg.Int("broker", "port")
     if err != nil {
-        log.Panicf("configure broker-port format error: %s\n", err)
+        log.Printf("configure broker-port format error: %s\n", err)
         os.Exit(1)
     }
 
     GlobalConf.AgentConnectionLimit, err = cfg.Int("broker", "connection-limit")
     if err != nil {
-        log.Panicf("configure broker-ConnectionLimit format error: %s\n", err)
+        log.Printf("configure broker-ConnectionLimit format error: %s\n", err)
         os.Exit(1)
     }
 
@@ -52,7 +52,7 @@ func LoadGlobalConfig() {
     }
     GlobalConf.AdminPort, err = cfg.Int("admin", "port")
     if err != nil {
-        log.Panicf("configure admin-port format error: %s\n", err)
+        log.Printf("configure admin-port format error: %s\n", err)
         os.Exit(1)
     }
 
@@ -63,31 +63,31 @@ func LoadGlobalConfig() {
 
     GlobalConf.DbHost, err = cfg.String("db","host")
     if err != nil {
-        log.Panicf("configure db-host format error: %s\n", err)
+        log.Printf("configure db-host format error: %s\n", err)
         os.Exit(1)
     }
 
     GlobalConf.DbPort, err = cfg.Int("db", "port")
     if err != nil {
-        log.Panicf("configure db-port format error: %s\n", err)
+        log.Printf("configure db-port format error: %s\n", err)
         os.Exit(1)
     }
 
     GlobalConf.DbHost, err = cfg.String("db","host")
     if err != nil {
-        log.Panicf("configure db-host format error: %s\n", err)
+        log.Printf("configure db-host format error: %s\n", err)
         os.Exit(1)
     }
 
     GlobalConf.DbName, err = cfg.String("db","database")
     if err != nil {
-        log.Panicf("configure db-database format error: %s\n", err)
+        log.Printf("configure db-database format error: %s\n", err)
         os.Exit(1)
     }
 
     GlobalConf.DbCollectionName, err = cfg.String("db","collection")
     if err != nil {
-        log.Panicf("configure db-collection format error: %s\n", err)
+        log.Printf("configure db-collection format error: %s\n", err)
         os.Exit(1)
     }
 }

@@ -23,7 +23,7 @@ func CreateClient(ip string, port int) (*Client, error) {
     }
     conn, err := net.DialUDP("udp", nil, addr)
     if err != nil {
-        log.Panicf("dial udp error: %s\n", err)
+        log.Printf("dial udp error: %s\n", err)
         return nil, err
     }
     return &Client{conn:conn,}, nil

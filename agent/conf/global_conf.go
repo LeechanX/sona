@@ -21,7 +21,7 @@ func LoadGlobalConfig() {
     //加载配置文件
     cfg, err := config.ReadDefault(*cfgPath)
     if err != nil {
-        log.Panicf("load configure path error: %s\n", err)
+        log.Printf("load configure path error: %s\n", err)
         os.Exit(1)
     }
 
@@ -31,12 +31,12 @@ func LoadGlobalConfig() {
     }
     GlobalConf.BrokerIp, err = cfg.String("broker", "ip")
     if err != nil {
-        log.Panicf("configure broker-ip format error: %s\n", err)
+        log.Printf("configure broker-ip format error: %s\n", err)
         os.Exit(1)
     }
     GlobalConf.BrokerPort, err = cfg.Int("broker", "port")
     if err != nil {
-        log.Panicf("configure broker-port format error: %s\n", err)
+        log.Printf("configure broker-port format error: %s\n", err)
         os.Exit(1)
     }
 
@@ -46,7 +46,7 @@ func LoadGlobalConfig() {
     }
     GlobalConf.AgentPort, err = cfg.Int("agent", "port")
     if err != nil {
-        log.Panicf("configure agent-port format error: %s\n", err)
+        log.Printf("configure agent-port format error: %s\n", err)
         os.Exit(1)
     }
 }

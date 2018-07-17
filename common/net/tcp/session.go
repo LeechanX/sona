@@ -99,7 +99,7 @@ func (session *Session) receiver() {
     for {
         cmdId, pbData, err := protocol.DecodeTCPMessage(session.conn)
         if err != nil {
-            log.Panicf("%s\n", err)
+            log.Printf("%s\n", err)
             return
         }
 
