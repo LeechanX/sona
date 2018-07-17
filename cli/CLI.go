@@ -4,9 +4,12 @@ import (
     "os"
     "fmt"
     "flag"
+    "time"
     "bufio"
     "strings"
     "sona/core"
+    "sona/protocol"
+    "sona/common/net/tcp/client"
 )
 
 type ServiceConfig struct {
@@ -25,12 +28,37 @@ func parseCommand(line string) []string {
     return result
 }
 
-func get(serviceKey string) *ServiceConfig {
+func get(serviceKey string, client *client.SyncClient) *ServiceConfig {
+    req := &protocol.AdminGetConfigReq{}
+    req.ServiceKey = &serviceKey
+
+    err := client.Send(protocol.AdminGetConfigReqId, req)
+    if err != nil {
+        fmt.Println(err)
+        return nil
+    }
+    //接收 100ms超时
+    timeout := 100 * time.Millisecond
+    rsp := &protocol.AdminGetConfigRsp{}
+    err = client.Read(timeout, protocol.AdminGetConfigRspId, rsp)
+    if err != nil {
+        fmt.Println(err)
+        return nil
+    }
+    if *rsp.Code == -1 {
+        fmt.Println("this service is not exist")
+        return nil
+    }
+
     fmt.Println()
     serviceConf := &ServiceConfig{
-        serviceKey:"richer.coolguy.leechanx",
-        version:123,
-        conf:map[string]string{"lover.name": "jelly claire", "money.value": "100000000", "today.age": "27"},
+        serviceKey:*rsp.ServiceKey,
+        version:uint(*rsp.Version),
+        conf:make(map[string]string),
+    }
+    for i := 0;i < len(rsp.ConfKeys);i++ {
+        key, value := rsp.ConfKeys[i], rsp.Values[i]
+        serviceConf.conf[key] = value
     }
 
     fmt.Printf("%-60s", "service key")
@@ -46,7 +74,7 @@ func get(serviceKey string) *ServiceConfig {
     return serviceConf
 }
 
-func add(serviceKey string) {
+func add(serviceKey string, client *client.SyncClient) {
     confKeys := make([]string, 0)
     confValues := make([]string, 0)
     for {
@@ -69,11 +97,38 @@ func add(serviceKey string) {
         confValues = append(confValues, confValue)
     }
 
-    //TODO: send add request
+    //send add request
+    req := &protocol.AdminAddConfigReq{}
+    req.ServiceKey = &serviceKey
+    req.ConfKeys = confKeys
+    req.Values = confValues
+
+    err := client.Send(protocol.AdminAddConfigReqId, req)
+    if err != nil {
+        fmt.Println(err)
+        return
+    }
+
+    //接收 100ms超时
+    timeout := 100 * time.Millisecond
+    rsp := &protocol.AdminExecuteRsp{}
+    err = client.Read(timeout, protocol.AdminExecuteRspId, rsp)
+    if err != nil {
+        fmt.Println(err)
+        return
+    }
+    if *rsp.Code == 0 {
+        fmt.Println("Submit successfully")
+    } else {
+        fmt.Println(err)
+    }
 }
 
-func update(serviceKey string) {
-    serviceConf := get(serviceKey)
+func update(serviceKey string, client *client.SyncClient) {
+    serviceConf := get(serviceKey, client)
+    if serviceConf == nil {
+        return
+    }
 
     fmt.Println(">> command mode ")
     fmt.Println(">>  ")
@@ -121,9 +176,18 @@ func update(serviceKey string) {
     }
 
     fmt.Println()
+    //build PB
+    req := &protocol.AdminUpdConfigReq{}
+    req.ServiceKey = &serviceConf.serviceKey
+    *req.Version = uint32(serviceConf.version)
+    req.ConfKeys = make([]string, 0)
+    req.Values = make([]string, 0)
+
     for confKey, confValue := range serviceConf.conf {
         fmt.Printf("%-60s", confKey)
         fmt.Printf(" %s\n", confValue)
+        req.ConfKeys = append(req.ConfKeys, confKey)
+        req.Values = append(req.Values, confValue)
     }
     fmt.Println()
 
@@ -131,13 +195,30 @@ func update(serviceKey string) {
     var ensure string
     fmt.Scanf("%s", &ensure)
     if ensure == "y" || ensure == "Y" {
-        //TODO
+        err := client.Send(protocol.AdminUpdConfigReqId, req)
+        if err != nil {
+            fmt.Println(err)
+            return
+        }
+        //接收 100ms超时
+        timeout := 100 * time.Millisecond
+        rsp := &protocol.AdminExecuteRsp{}
+        err = client.Read(timeout, protocol.AdminExecuteRspId, rsp)
+        if err != nil {
+            fmt.Println(err)
+            return
+        }
+        if *rsp.Code == 0 {
+            fmt.Println("Submit successfully")
+        } else {
+            fmt.Println(err)
+        }
     }
 }
 
 func main() {
     host := flag.String("host", "", "admin server ip")
-    port := flag.Uint("port", 0, "admin server port")
+    port := flag.Int("port", 0, "admin server port")
     operation := flag.String("operation", "get", "[get],[add] or [update] configures")
 
     flag.Parse()
@@ -152,6 +233,11 @@ func main() {
     }
 
     //connect to admin server
+    client, err := client.CreateSyncClient(*host, *port)
+    if err != nil {
+        fmt.Println(err)
+        return
+    }
 
     //ui
     var serviceKey string
@@ -167,10 +253,10 @@ func main() {
     }
 
     if *operation == "get" {
-        get(serviceKey)
+        get(serviceKey, client)
     } else if *operation == "add" {
-        add(serviceKey)
+        add(serviceKey, client)
     } else {
-        update(serviceKey)
+        update(serviceKey, client)
     }
 }
