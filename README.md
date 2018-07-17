@@ -30,21 +30,14 @@ go语言业务：
 ```
 import "sona/api"
 
-//获取service = nba.player.info的服务配置
-configApi, err := api.GetApi("nba.player.info")
+configApi, err := api.GetApi("nba.player.info") //获取nba.player.info服务的配置
 if err == nil {
     defer configApi.Close()
-    //获取lebron-james.number值
-    value := configApi.Get("lebron-james","number")
-    fmt.Println("value is", value)
 
-    //获取lebron-james.friends值列表
-    list := configApi.GetList("lebron-james","friends")
-    for _, item := range list {
-        fmt.Println(item)
-    }
+    value := configApi.Get("lebron-james","number") //获取lebron-james.number值 (string)
+
+    list := configApi.GetList("lebron-james","friends") //获取lebron-james.friends值列表 ([]string)
 }
-	
 ```
 
 ## 架构
