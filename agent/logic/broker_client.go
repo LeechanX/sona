@@ -21,7 +21,7 @@ func brokerClientMapping(cmdId uint) proto.Message {
 }
 
 //SubscribeBrokerRspId消息的回调函数
-func SubscribeResultHandler(_ *client.Client, pb proto.Message) {
+func SubscribeResultHandler(_ *client.AsyncClient, pb proto.Message) {
     req, ok := pb.(*protocol.SubscribeBrokerRsp)
     if !ok {
         log.Println("get SubscribeBrokerRsp pb error")
@@ -43,7 +43,7 @@ func SubscribeResultHandler(_ *client.Client, pb proto.Message) {
 }
 
 //PushServiceConfigReqId消息的回调函数
-func PushConfigHandler(_ *client.Client, pb proto.Message) {
+func PushConfigHandler(_ *client.AsyncClient, pb proto.Message) {
     req, ok := pb.(*protocol.PushServiceConfigReq)
     if !ok {
         log.Println("get PushServiceConfigReq pb error")
@@ -54,7 +54,7 @@ func PushConfigHandler(_ *client.Client, pb proto.Message) {
 }
 
 //PullServiceConfigRspId消息的回调函数
-func PullResultHandler(_ *client.Client, pb proto.Message) {
+func PullResultHandler(_ *client.AsyncClient, pb proto.Message) {
     req, ok := pb.(*protocol.PullServiceConfigRsp)
     if !ok {
         log.Println("get PullServiceConfigRsp pb error")
@@ -64,7 +64,7 @@ func PullResultHandler(_ *client.Client, pb proto.Message) {
     ConfController.UpdateService(*req.ServiceKey, uint(*req.Version), req.ConfKeys, req.Values)
 }
 
-func CreateBrokerClient(ip string, port int) *client.Client {
+func CreateBrokerClient(ip string, port int) *client.AsyncClient {
     client := client.CreateClient(ip, port)
     client.SetMapping(brokerClientMapping)
     //安装回调

@@ -13,7 +13,7 @@ var AccessRecordTable *AccessRecord
 var ConfController *core.ConfigController
 
 //broker客户端
-var BrokerClient *client.Client
+var BrokerClient *client.AsyncClient
 
 //biz服务
 var BizServer *udp.Server
