@@ -87,6 +87,8 @@ func DecodeTCPMessage(conn *net.TCPConn) (uint, []byte, error) {
     //再读取body 这里最好设置50ms超时，因为包头已经来了，包身不应该太久不来
     conn.SetReadDeadline(time.Now().Add(50 * time.Millisecond))
     _, err = io.ReadFull(conn, data[:bodyLength])
+    //清除超时
+    conn.SetReadDeadline(time.Time{})
     if err != nil {
         return 0, nil, err
     }
