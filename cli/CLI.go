@@ -121,7 +121,7 @@ func add(serviceKey string, client *client.SyncClient) {
     if *rsp.Code == 0 {
         fmt.Println("Add successfully")
     } else {
-        fmt.Println(*rsp.Error())
+        fmt.Println(*rsp.Error)
     }
 }
 
@@ -153,7 +153,7 @@ func del(serviceKey string, client *client.SyncClient) {
         if *rsp.Code == 0 {
             fmt.Println("Delete successfully")
         } else {
-            fmt.Println(*rsp.Error())
+            fmt.Println(*rsp.Error)
         }
     }
 }
