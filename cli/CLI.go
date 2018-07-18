@@ -245,7 +245,7 @@ func update(serviceKey string, client *client.SyncClient) {
         if *rsp.Code == 0 {
             fmt.Println("Submit successfully")
         } else {
-            fmt.Println(*rsp.Error())
+            fmt.Println(*rsp.Error)
         }
     }
 }
