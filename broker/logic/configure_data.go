@@ -50,7 +50,9 @@ func (cfd *ConfigureData) Reset() error {
             values:doc.ConfValues,
         }
         newData[doc.ServiceKey] = serviceData
-        log.Println("debug: data: ",doc.ServiceKey)
+        log.Println("debug: service key: ", doc.ServiceKey)
+        log.Println("debug: conf keys: ", doc.ConfKeys)
+        log.Println("debug: conf values: ", doc.ConfValues)
     }
     ConfigData.rwMutex.Lock()
     cfd.data = newData
@@ -158,7 +160,7 @@ func (cfd *ConfigureData) UpdateData(serviceKey string, version uint, configKeys
         cfd.rwMutex.Unlock()
         return 0, errors.New("this service configure is not exist")
     }
-    cfd.rwMutex.Unlock()
+
     //在mongodb中执行删除, 即把配置内容设置为空
     //版本+1
     version += 1
@@ -172,8 +174,8 @@ func (cfd *ConfigureData) UpdateData(serviceKey string, version uint, configKeys
         //更新版本
         cfd.data[serviceKey].version = version
         //将配置设置为空
-        cfd.data[serviceKey].confKeys = []string{}
-        cfd.data[serviceKey].values = []string{}
+        cfd.data[serviceKey].confKeys = configKeys
+        cfd.data[serviceKey].values = values
     }
     log.Println("debug: mark kStatusIdle")
     //在内存中标记空闲
