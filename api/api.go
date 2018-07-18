@@ -42,7 +42,7 @@ func GetApi(serviceKey string) (*SonaApi, error) {
 }
 
 func (api *SonaApi) keepUsing() {
-    req := &protocol.KeepUsingReq{ServiceKey:&api.serviceKey}
+    req := &protocol.KeepUsingReq{ServiceKey:proto.String(api.serviceKey)}
     for {
         time.Sleep(time.Second * 10)
         //tell agent

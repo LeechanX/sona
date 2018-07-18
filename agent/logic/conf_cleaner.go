@@ -1,6 +1,7 @@
 package logic
 
 import (
+    "log"
     "sync"
     "time"
     "sona/core"
@@ -14,7 +15,9 @@ type AccessRecord struct {
 
 //agent启动加载共享内存后，使用共享内存中所有serviceKey，创建accessRecord
 func GetAccessRecord(serviceKeys []string) *AccessRecord {
-    record := &AccessRecord{}
+    record := &AccessRecord{
+        lastUseTime:make(map[string]int64),
+    }
     for _, serviceKey := range serviceKeys {
         record.Record(serviceKey)
     }
@@ -53,6 +56,7 @@ func (r *AccessRecord) Cleaner(cc *core.ConfigController) {
         time.Sleep(time.Second * 10)
         outdated := r.RemoveOutdated()
         for _, serviceKey := range outdated {
+            log.Printf("remove service %s because it is no used for a long time", serviceKey)
             cc.RemoveService(serviceKey)
         }
     }

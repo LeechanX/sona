@@ -21,7 +21,7 @@ func PullWhenStart() {
 func PeriodPulling() {
     //周期性更新每个现有service的配置
     for {
-        time.Sleep(time.Second * 10)
+        time.Sleep(time.Second * 50)
         serviceKeys := ConfController.GetAllServiceKeys()
         for serviceKey := range serviceKeys {
             log.Printf("Periodic Pull Routine: try to update %s's configures\n", serviceKey)

@@ -61,5 +61,6 @@ func main() {
 
         //连接已建立，一直运行，等待断连，说明网络出了问题
         logic.BrokerClient.Wait()
+        time.Sleep(1 * time.Second)
     }
 }

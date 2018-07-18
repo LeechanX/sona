@@ -22,6 +22,7 @@ func brokerClientMapping(cmdId uint) proto.Message {
 
 //SubscribeBrokerRspId消息的回调函数
 func SubscribeResultHandler(_ *client.AsyncClient, pb proto.Message) {
+    log.Println("debug: subscribe result callback")
     req, ok := pb.(*protocol.SubscribeBrokerRsp)
     if !ok {
         log.Println("get SubscribeBrokerRsp pb error")
@@ -29,7 +30,10 @@ func SubscribeResultHandler(_ *client.AsyncClient, pb proto.Message) {
     }
     if *req.Code == 0 {
         //订阅成功
+        log.Printf("subscribe for %s successfully\n", *req.ServiceKey)
         ConfController.UpdateService(*req.ServiceKey, uint(*req.Version), req.ConfKeys, req.Values)
+    } else {
+        log.Printf("subscribe for %s failed, code is %d\n", *req.ServiceKey, *req.Code)
     }
     rsp := &protocol.SubscribeAgentRsp{}
     rsp.ServiceKey = proto.String(*req.ServiceKey)
