@@ -41,7 +41,7 @@ func GetConfigController() (*ConfigController, error) {
     }
     configController := ConfigController{}
     //先确定是否本机仅有一个controller
-    flockPath := fmt.Sprintf("%s/global.flk", RootPath)
+    flockPath := fmt.Sprintf("%s/global.lock", RootPath)
     gFlk, err := getWrFlock(flockPath)
     if err != nil {
         return nil, err
@@ -294,7 +294,7 @@ func GetConfigGetter() (*ConfigGetter, error) {
     configGetter := ConfigGetter {}
     //获取文件锁
     for i := uint(0);i < ServiceBucketLimit; i++ {
-        flockPath := fmt.Sprintf("%s/cfg_%d.flk", RootPath, i)
+        flockPath := fmt.Sprintf("%s/cfg_%d.lock", RootPath, i)
         fl, err := getRdFlock(flockPath)
         if err != nil {
             //关闭所有已打开文件锁

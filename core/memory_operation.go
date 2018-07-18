@@ -230,11 +230,14 @@ func setOneConf(confHub *[TotalConfMemSize]byte, idx uint, pos uint, confKey str
 //获取某service的一个配置值
 func GetConf(confHub *[TotalConfMemSize]byte, idx uint, confKey string) string {
     pos, exist := searchOneConf(confHub, idx, confKey)
-    if exist {
-        k, _ := getOneConf(confHub, idx, pos)
-        return k
+    if !exist {
+        return ""
     }
-    return ""
+    key, value := getOneConf(confHub, idx, pos)
+    if key != confKey {
+        return ""
+    }
+    return value
 }
 
 //在某service下的配置中，找到第一个 字典序>=confKey的成员
