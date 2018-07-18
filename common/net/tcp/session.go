@@ -34,7 +34,6 @@ type Session struct {
 
 //创建会话
 func CreateSession(server *Server, c *net.TCPConn) {
-    log.Println("call this")
     session := Session{
         status:kConnStatusConnected,
         conn:c,

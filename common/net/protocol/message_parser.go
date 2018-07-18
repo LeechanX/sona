@@ -61,7 +61,7 @@ func DecodeUDPMessage(conn *net.UDPConn) (uint, *net.UDPAddr, []byte, error) {
         return 0, nil, nil, errors.New(fmt.Sprintf(
             "receive from udp data format error, length %d\n", head.Length))
     }
-    return uint(head.CmdId), cliAddr, data[HeadBytes:], nil
+    return uint(head.CmdId), cliAddr, data[HeadBytes:head.Length], nil
 }
 
 func DecodeTCPMessage(conn *net.TCPConn) (uint, []byte, error) {

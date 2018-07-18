@@ -163,22 +163,24 @@ func (c *AsyncClient) sender() {
         c.close()
         c.wg.Done()
     }()
-    select {
-    case task, ok := <- c.sendQueue:
-        if !ok {
-            //impossible code
-            return
-        } else if task == nil {
-            //说明连接已经关闭
-            return
-        }
-
-        data := protocol.EncodeMessage(task.cmdId, task.packet)
-        //设置100ms的超时
-        c.conn.SetWriteDeadline(time.Now().Add(100 * time.Millisecond))
-        if _, err := c.conn.Write(data);err != nil {
-            log.Printf("send data error: %s\n", err)
-            return
+    for {
+        select {
+        case task, ok := <- c.sendQueue:
+            if !ok {
+                //impossible code
+                return
+            } else if task == nil {
+                //说明连接已经关闭
+                return
+            }
+            data := protocol.EncodeMessage(task.cmdId, task.packet)
+            //设置100ms的超时
+            c.conn.SetWriteDeadline(time.Now().Add(100 * time.Millisecond))
+            if _, err := c.conn.Write(data);err != nil {
+                log.Printf("send data error: %s\n", err)
+                return
+            }
         }
     }
+
 }
