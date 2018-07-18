@@ -43,7 +43,6 @@ func CreateSession(server *Server, c *net.TCPConn) {
         server:server,
     }
     //当前连接数+1
-    log.Println("connection count + 1")
     atomic.AddInt32(&session.server.NumberOfConnections, 1)
     //启动发送G
     go session.sender()
@@ -77,7 +76,6 @@ func (session *Session) Close() {
     //为防止写channel产生panic，不关闭channel，仅发nil
     session.sendQueue<- nil
     session.conn.Close()
-    log.Println("connction count - 1")
     atomic.AddInt32(&session.server.NumberOfConnections, -1)
 }
 
@@ -101,10 +99,11 @@ func (session *Session) receiver() {
     for {
         cmdId, pbData, err := protocol.DecodeTCPMessage(session.conn)
         if err != nil {
-            log.Printf("%s\n", err)
+            if err != io.EOF {
+                log.Printf("read connection get error: %s\n", err)
+            }
             return
         }
-
         handler, ok := session.server.hooks[cmdId]
         if !ok {
             log.Printf("unknown request cmd id: %d\n", cmdId)
