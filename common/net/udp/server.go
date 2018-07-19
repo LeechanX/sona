@@ -31,12 +31,12 @@ type Server struct {
     sendQueue chan *SendTask
     SubscribeBook *SubscribeList//被订阅列表
 
-    mapping PBMapping//消息ID与消息PB的映射函数
-    hooks map[uint]MsgHandler//消息回调
+    factory PacketFactory//消息ID与消息PB的映射函数
+    callbacks map[uint]MsgHandler//消息回调
 }
 
 //消息ID与消息PB的映射函数类型
-type PBMapping func (uint) proto.Message
+type PacketFactory func (uint) proto.Message
 //遇到某消息ID的回调函数类型
 type MsgHandler func (*Server, *net.UDPAddr, proto.Message)
 
@@ -62,24 +62,24 @@ func CreateServer(serviceName string, ip string, port int) (*Server, error) {
     }
     server.conn = conn
     server.sendQueue = make(chan *SendTask, 100)
-    server.hooks = make(map[uint]MsgHandler)
+    server.callbacks = make(map[uint]MsgHandler)
     return &server, nil
 }
 
 //设置消息ID与消息PB的映射函数
-func (server *Server) SetMapping(m PBMapping) {
-    server.mapping = m
+func (server *Server) SetFactory(f PacketFactory) {
+    server.factory = f
 }
 
 //设置消息ID对应的回调
 func (server *Server) RegHandler(cmdId uint, handler MsgHandler) {
-    server.hooks[cmdId] = handler
+    server.callbacks[cmdId] = handler
 }
 
 //启动服务
 func (server *Server) Start() error {
-    if server.mapping == nil {
-        return errors.New("haven't set pb mapping yet")
+    if server.factory == nil {
+        return errors.New("haven't set packet factory yet")
     }
     //启动发送G
     go server.sender()
@@ -120,12 +120,12 @@ func (server *Server) receiver() {
             continue
         }
         //doing
-        handler, ok := server.hooks[cmdId]
+        handler, ok := server.callbacks[cmdId]
         if !ok {
             log.Printf("unknown request cmd id: %d\n", cmdId)
             continue
         }
-        req := server.mapping(cmdId)
+        req := server.factory(cmdId)
         if req == nil {
             log.Printf("no pb mapping for cmd id: %d\n", cmdId)
             continue

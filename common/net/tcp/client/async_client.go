@@ -8,6 +8,7 @@ import (
     "time"
     "errors"
     "sync/atomic"
+    "sona/common/net/tcp"
     "sona/common/net/protocol"
     "github.com/golang/protobuf/proto"
 )
@@ -24,7 +25,7 @@ type SendTask struct {
 }
 
 //消息ID与消息PB的映射函数类型
-type PBMapping func (uint) proto.Message
+type PacketFactory func (uint) proto.Message
 //遇到某消息ID的回调函数类型
 type MsgHandler func (*AsyncClient, proto.Message)
 
@@ -36,37 +37,81 @@ type AsyncClient struct {
     wg sync.WaitGroup//用于等待连接的读G、写G退出，标明连接被关闭
     sendQueue chan *SendTask
 
-    mapping PBMapping//消息ID与消息PB的映射函数
-    hooks map[uint]MsgHandler//消息回调
+    factory PacketFactory//消息ID与消息PB的映射函数
+    callbacks map[uint]MsgHandler//消息回调
+    HeartBeatRspTs int64//上次收到心跳回复的时间戳，两个G使用，故原子操作
 }
 
 //创建一个client结构体
-func CreateAsyncClient(ip string, port int) *AsyncClient {
-    return &AsyncClient{
+func CreateAsyncClient(ip string, port int, enableHeartBeat bool) *AsyncClient {
+    cli := &AsyncClient{
         Ip:ip,
         Port:port,
         conn:nil,
         status:kConnStatusDisconnected,
         sendQueue:make(chan *SendTask, 1000),
-        mapping:nil,
-        hooks:make(map[uint]MsgHandler),
+        factory:nil,
+        callbacks:make(map[uint]MsgHandler),
+    }
+    //主动注册：收到心跳请求的回调
+    cli.callbacks[tcp.HeartbeatReqId] = func (c *AsyncClient, _ proto.Message) {
+        rsp := &protocol.HeartbeatRsp{
+            Useless:proto.Bool(true),
+        }
+        c.Send(tcp.HeartbeatRspId, rsp)
+    }
+    if enableHeartBeat {
+        currentTs := time.Now().Unix()
+        atomic.StoreInt64(&cli.HeartBeatRspTs, currentTs)
+        //注册收到心跳回复的回调
+        cli.callbacks[tcp.HeartbeatRspId] = func(c *AsyncClient, _ proto.Message) {
+            //更新时间
+            atomic.StoreInt64(&c.HeartBeatRspTs, time.Now().Unix())
+        }
+        //开启心跳检测G
+        go cli.HeartbeatProbe()
+    }
+
+    return cli
+}
+
+//心跳检测G
+func (c *AsyncClient) HeartbeatProbe() {
+    var lastSendTs int64
+    req := &protocol.HeartbeatReq{
+        Useless:proto.Bool(true),
+    }
+    for {
+        time.Sleep(time.Second)
+        if c.isConnected() {
+            //建立了连接且开启了心跳检测
+            currentTs := time.Now().Unix()
+            if currentTs - atomic.LoadInt64(&c.HeartBeatRspTs) >= tcp.LostThreshold {
+                //连接不再活跃，关闭
+                log.Println("connection is inactive too long, so close it")
+                c.close()
+            } else if currentTs - lastSendTs >= tcp.HeartbeatPeriod {
+                //发心跳
+                c.Send(tcp.HeartbeatReqId, req)
+            }
+        }
     }
 }
 
 //设置消息ID与消息PB的映射函数
-func (c *AsyncClient) SetMapping(m PBMapping) {
-    c.mapping = m
+func (c *AsyncClient) SetFactory(f PacketFactory) {
+    c.factory = f
 }
 
 //设置消息ID对应的回调
 func (c *AsyncClient) RegHandler(cmdId uint, handler MsgHandler) {
-    c.hooks[cmdId] = handler
+    c.callbacks[cmdId] = handler
 }
 
 //执行连接
 func (c *AsyncClient) Connect() error {
-    if c.mapping == nil {
-        return errors.New("haven't set pb mapping yet")
+    if c.factory == nil {
+        return errors.New("haven't set packet factory yet")
     }
     if atomic.LoadInt32(&c.status) == kConnStatusConnected {
         return errors.New("already built the connection")
@@ -82,6 +127,8 @@ func (c *AsyncClient) Connect() error {
     log.Printf("connected to %s successfully\n", fmt.Sprintf("%s:%d", c.Ip, c.Port))
     c.conn = conn
     //设置状态为已连接
+    currentTs := time.Now().Unix()
+    atomic.StoreInt64(&c.HeartBeatRspTs, currentTs)
     atomic.StoreInt32(&c.status, kConnStatusConnected)
     //创建两个协程：读、写
     c.wg.Add(1)
@@ -94,12 +141,12 @@ func (c *AsyncClient) Connect() error {
 //等待连接关闭
 func (c *AsyncClient) Wait() {
     c.wg.Wait()
-    log.Printf("connection with %s is closed\n", c.Ip, c.Port)
+    log.Printf("connection with %s:%d is closed\n", c.Ip, c.Port)
 }
 
 //发送消息
 func (c *AsyncClient) Send(cmdId uint, pb proto.Message) bool {
-    if atomic.LoadInt32(&c.status) == kConnStatusConnected {
+    if c.isConnected() {
         c.sendQueue<- &SendTask{
             cmdId:cmdId,
             packet:pb,
@@ -107,6 +154,11 @@ func (c *AsyncClient) Send(cmdId uint, pb proto.Message) bool {
         return true
     }
     return false
+}
+
+//连接是否建立
+func (c *AsyncClient) isConnected() bool {
+    return atomic.LoadInt32(&c.status) == kConnStatusConnected
 }
 
 //关闭连接
@@ -136,7 +188,7 @@ func (c *AsyncClient) receiver() {
             log.Printf("%s\n", err)
             return
         }
-        req := c.mapping(cmdId)
+        req := c.factory(cmdId)
         if req == nil {
             log.Printf("no pb mapping for cmd id: %d\n", cmdId)
             continue
@@ -146,7 +198,7 @@ func (c *AsyncClient) receiver() {
             return
         }
 
-        handler, ok := c.hooks[cmdId]
+        handler, ok := c.callbacks[cmdId]
         if !ok {
             log.Printf("unknown request cmd id: %d\n", cmdId)
             continue

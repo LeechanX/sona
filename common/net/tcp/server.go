@@ -7,10 +7,11 @@ import (
     "errors"
     "sync/atomic"
     "github.com/golang/protobuf/proto"
+    "time"
 )
 
-//消息ID与消息PB的映射函数类型
-type PBMapping func (uint) proto.Message
+//消息ID与消息PB的映射函数类型，根据消息ID给出对应的PB包
+type PacketFactory func (uint) proto.Message
 //遇到某消息ID的回调函数类型
 type MsgHandler func (*Session, proto.Message)
 
@@ -23,8 +24,9 @@ type Server struct {
     SubscribeBook *SubscribeList//被订阅列表
 
     listen *net.TCPListener
-    mapping PBMapping//消息ID与消息PB的映射函数
-    hooks map[uint]MsgHandler//消息回调
+    factory PacketFactory//消息ID与消息PB的映射函数
+    callbacks map[uint]MsgHandler//消息回调
+    actives ActiveList//活跃列表:心跳维护
 }
 
 //https://www.cnblogs.com/concurrency/p/4043271.html
@@ -44,28 +46,47 @@ func CreateServer(serviceName string, ip string, port int, maxConnectionNumber u
         NumberOfConnections:0,
         SubscribeBook:CreateSubscribeList(),
         listen:listen,
-        mapping:nil,
-        hooks:make(map[uint]MsgHandler),
+        factory:nil,
+        callbacks:make(map[uint]MsgHandler),
     }
-
+    //先主动注册收到心跳的回调
+    server.callbacks[HeartbeatReqId] = HeartbeatReqHandler
     log.Printf("create %s server(%s) successfully\n", serviceName, fmt.Sprintf("%s:%d", ip, port))
     return server, nil
 }
 
+//打开发心跳机制
+func (server *Server) EnableHeartbeat() {
+    log.Println("open hearbeat probe mechanism")
+    //注册收到心跳回复的回调
+    server.callbacks[HeartbeatRspId] = HeartbeatRspHandler
+    //开启一个G用于驱动心跳检测
+    go func(s *Server) {
+        for {
+            s.actives.HeartbeatProbe()
+            time.Sleep(time.Second)
+        }
+    }(server)
+}
+
 //设置消息ID与消息PB的映射函数
-func (server *Server) SetMapping(m PBMapping) {
-    server.mapping = m
+func (server *Server) SetFactory(f PacketFactory) {
+    server.factory = f
 }
 
 //设置消息ID对应的回调
 func (server *Server) RegHandler(cmdId uint, handler MsgHandler) {
-    server.hooks[cmdId] = handler
+    if cmdId == HeartbeatReqId || cmdId == HeartbeatRspId {
+        log.Printf("can't use cmdId value %d or %d\n", HeartbeatReqId, HeartbeatRspId)
+        return
+    }
+    server.callbacks[cmdId] = handler
 }
 
 //启动服务
 func (server *Server) Start() error {
-    if server.mapping == nil {
-        return errors.New("haven't set pb mapping yet")
+    if server.factory == nil {
+        return errors.New("haven't set packet factory yet")
     }
     log.Printf("start %s server(%s) serivce\n", server.Name, fmt.Sprintf("%s:%d", server.Ip, server.Port))
     defer server.listen.Close()

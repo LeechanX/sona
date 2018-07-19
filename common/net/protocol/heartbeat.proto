@@ -1,0 +1,9 @@
+package protocol;
+
+message HeartbeatReq {
+    required bool useless = 1;
+}
+
+message HeartbeatRsp {
+    required bool useless = 1;
+}

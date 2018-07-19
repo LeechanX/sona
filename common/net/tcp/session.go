@@ -7,6 +7,7 @@ import (
     "sync/atomic"
     "sona/common/net/protocol"
     "github.com/golang/protobuf/proto"
+    "io"
 )
 
 //记录当前网络状态
@@ -30,19 +31,26 @@ type Session struct {
     subscribeList map[interface{}]bool
     //指向tcp服务入口
     server *Server
+    HeartBeatReqTs int64//上次发送心跳请求的时间戳
+    HeartBeatRspTs int64//上次收到心跳回复的时间戳
 }
 
 //创建会话
 func CreateSession(server *Server, c *net.TCPConn) {
+    currentTs := time.Now().Unix()
     session := Session{
         status:kConnStatusConnected,
         conn:c,
         sendQueue:make(chan *SendTask, 1000),
         subscribeList:make(map[interface{}]bool),
         server:server,
+        HeartBeatReqTs:currentTs,
+        HeartBeatRspTs:currentTs,
     }
     //当前连接数+1
     atomic.AddInt32(&session.server.NumberOfConnections, 1)
+    //在活跃列表上添加
+    session.server.actives.AddSession(&session)
     //启动发送G
     go session.sender()
     //启动接收G
@@ -67,7 +75,8 @@ func (session *Session) Close() {
         //已被关闭过
         return
     }
-
+    //在活跃列表中删除
+    session.server.actives.RemoveSession(session)
     //需要在全局被订阅列表里删除每个关联
     for infoKey := range session.subscribeList {
         session.server.SubscribeBook.UnSubscribe(infoKey, session)
@@ -103,12 +112,23 @@ func (session *Session) receiver() {
             }
             return
         }
-        handler, ok := session.server.hooks[cmdId]
+        handler, ok := session.server.callbacks[cmdId]
         if !ok {
-            log.Printf("unknown request cmd id: %d\n", cmdId)
+            log.Printf("unexcepted request cmd id: %d\n", cmdId)
             continue
         }
-        req := session.server.mapping(cmdId)
+
+        var req proto.Message
+        if cmdId == HeartbeatReqId {
+            //说明是心跳请求到来
+            req = &protocol.HeartbeatReq{}
+        } else if cmdId == HeartbeatRspId {
+            //说明是心跳回复到来
+            req = &protocol.HeartbeatRsp{}
+        } else {
+            //业务包，交给工厂生产PB
+            req = session.server.factory(cmdId)
+        }
         if req == nil {
             log.Printf("no pb mapping for cmd id: %d\n", cmdId)
             continue
