@@ -56,7 +56,7 @@ func (r *AccessRecord) Cleaner(cc *core.ConfigController) {
         time.Sleep(time.Second * 10)
         outdated := r.RemoveOutdated()
         for _, serviceKey := range outdated {
-            log.Printf("remove service %s because it is no used for a long time", serviceKey)
+            log.Printf("remove service %s because it hasn't used for a long time\n", serviceKey)
             cc.RemoveService(serviceKey)
         }
     }

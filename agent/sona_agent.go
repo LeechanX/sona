@@ -31,7 +31,7 @@ func main() {
     defer logic.BizServer.Close()
 
     //创建broker客户端
-    logic.BrokerClient = logic.CreateBrokerClient(conf.GlobalConf.BrokerIp, conf.GlobalConf.BrokerPort)
+    logic.BrokerClient = logic.CreateBrokerClient(conf.GlobalConf.BrokerIp, conf.GlobalConf.BrokerPort, true)
 
     //创建时间戳管理
     allServiceKeysMap := controller.GetAllServiceKeys()

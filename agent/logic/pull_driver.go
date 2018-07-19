@@ -11,6 +11,7 @@ import (
 func PullWhenStart() {
     serviceKeys := ConfController.GetAllServiceKeys()
     for serviceKey := range serviceKeys {
+        log.Printf("pull serive %s directly\n", serviceKey)
         req := &protocol.PullServiceConfigReq{}
         req.ServiceKey = proto.String(serviceKey)
         req.Version = proto.Uint32(uint32(serviceKeys[serviceKey]))
@@ -23,8 +24,8 @@ func PeriodPulling() {
     for {
         time.Sleep(time.Second * 50)
         serviceKeys := ConfController.GetAllServiceKeys()
+        log.Printf("try to re-pull %d configures\n", len(serviceKeys))
         for serviceKey := range serviceKeys {
-            log.Printf("Periodic Pull Routine: try to update %s's configures\n", serviceKey)
             req := &protocol.PullServiceConfigReq{}
             req.ServiceKey = proto.String(serviceKey)
             req.Version = proto.Uint32(uint32(serviceKeys[serviceKey]))
