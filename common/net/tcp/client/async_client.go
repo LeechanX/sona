@@ -184,13 +184,22 @@ func (c *AsyncClient) receiver() {
     }()
     for {
         cmdId, pbData, err := protocol.DecodeTCPMessage(c.conn)
+        var req proto.Message
         if err != nil {
             log.Printf("%s\n", err)
             return
         }
-        req := c.factory(cmdId)
+        if cmdId == tcp.HeartbeatReqId {
+            //远端发来heartbeat
+            req = &protocol.HeartbeatReq{}
+        } else if cmdId == tcp.HeartbeatRspId {
+            //远端回复heartbeat应答
+            req = &protocol.HeartbeatRsp{}
+        } else {
+            req = c.factory(cmdId)
+        }
         if req == nil {
-            log.Printf("no pb mapping for cmd id: %d\n", cmdId)
+            log.Printf("no packet factory for cmd id: %d\n", cmdId)
             continue
         }
         if err := proto.Unmarshal(pbData, req);err != nil {

@@ -26,7 +26,7 @@ type Server struct {
     listen *net.TCPListener
     factory PacketFactory//消息ID与消息PB的映射函数
     callbacks map[uint]MsgHandler//消息回调
-    actives ActiveList//活跃列表:心跳维护
+    actives *ActiveList//活跃列表:心跳维护
 }
 
 //https://www.cnblogs.com/concurrency/p/4043271.html
@@ -48,6 +48,7 @@ func CreateServer(serviceName string, ip string, port int, maxConnectionNumber u
         listen:listen,
         factory:nil,
         callbacks:make(map[uint]MsgHandler),
+        actives:CreateActiveList(),
     }
     //先主动注册收到心跳的回调
     server.callbacks[HeartbeatReqId] = HeartbeatReqHandler

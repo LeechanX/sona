@@ -1,6 +1,7 @@
 package tcp
 
 import (
+    "log"
     "sync"
     "time"
     "sync/atomic"
@@ -19,6 +20,12 @@ const (
 type ActiveList struct {
     mutex sync.Mutex//没必要读写锁，因为多写一读
     sessions map[*Session]bool//当前连接总集合
+}
+
+func CreateActiveList() *ActiveList {
+    return &ActiveList{
+        sessions:make(map[*Session]bool),
+    }
 }
 
 //新建连接就放入此集合
@@ -70,6 +77,7 @@ func (list *ActiveList) HeartbeatProbe() {
     list.mutex.Unlock()
     //关闭非活跃连接
     for _, session := range lost {
+        log.Printf("connection %s is inactive too long, so close it\n", session.conn.RemoteAddr().String())
         session.Close()
     }
     //发心跳
