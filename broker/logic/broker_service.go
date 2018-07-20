@@ -13,7 +13,7 @@ import (
 var BrokerServer *tcp.Server
 
 //消息ID与对应PB的映射
-func brokerMapping(cmdId uint) proto.Message {
+func brokerMsgFactory(cmdId uint) proto.Message {
     switch cmdId {
     case protocol.SubscribeReqId:
         return &protocol.SubscribeReq{}
@@ -25,11 +25,7 @@ func brokerMapping(cmdId uint) proto.Message {
 
 //SubscribeReqId消息的回调函数
 func SubscribeHandler(session *tcp.Session, pb proto.Message) {
-    req, ok := pb.(*protocol.SubscribeReq)
-    if !ok {
-        log.Println("get SubscribeReq pb error")
-        return
-    }
+    req := pb.(*protocol.SubscribeReq)
     //订阅：此连接对*req.ServiceKey感兴趣
     session.Subscribe(*req.ServiceKey)
     //创建回包
@@ -53,11 +49,7 @@ func SubscribeHandler(session *tcp.Session, pb proto.Message) {
 
 //PullServiceConfigReqId消息的回调函数
 func PullConfigHandler(session *tcp.Session, pb proto.Message) {
-    req, ok := pb.(*protocol.PullServiceConfigReq)
-    if !ok {
-        log.Println("get SubscribeReq pb error")
-        return
-    }
+    req := pb.(*protocol.PullServiceConfigReq)
     //订阅：此连接对*req.ServiceKey感兴趣
     session.Subscribe(*req.ServiceKey)
     //创建回包
@@ -83,8 +75,10 @@ func StartBrokerService() {
         os.Exit(1)
     }
     BrokerServer = server
+    //开启心跳检测
+    BrokerServer.EnableHeartbeat()
     //注册消息ID与PB的映射
-    BrokerServer.SetMapping(brokerMapping)
+    BrokerServer.SetFactory(brokerMsgFactory)
     //注册所有回调
     BrokerServer.RegHandler(protocol.SubscribeReqId, SubscribeHandler)
     BrokerServer.RegHandler(protocol.PullServiceConfigReqId, PullConfigHandler)
