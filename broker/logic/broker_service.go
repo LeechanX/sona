@@ -26,7 +26,7 @@ func brokerMsgFactory(cmdId uint) proto.Message {
 //SubscribeReqId消息的回调函数
 func SubscribeHandler(session *tcp.Session, pb proto.Message) {
     req := pb.(*protocol.SubscribeReq)
-    log.Printf("agent %s tries to subscribe service %s\n", session.RemoteAddr().String(), *req.ServiceKey)
+    log.Printf("agent %s tries to subscribe service %s\n", session.Addr(), *req.ServiceKey)
     //订阅：此连接对*req.ServiceKey感兴趣
     session.Subscribe(*req.ServiceKey)
     //创建回包
