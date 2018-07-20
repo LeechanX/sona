@@ -91,7 +91,7 @@ func DelConfig(serviceKey string, version uint) error {
 }
 
 //消息ID与对应PB的映射
-func adminMapping(cmdId uint) proto.Message {
+func adminMsgFactory(cmdId uint) proto.Message {
     switch cmdId {
     case protocol.AdminAddConfigReqId:
         return &protocol.AdminAddConfigReq{}
@@ -108,11 +108,8 @@ func adminMapping(cmdId uint) proto.Message {
 //AdminAddConfigReqId消息的回调函数
 func addConfigHandler(session *tcp.Session, pb proto.Message) {
     log.Println("debug: into add config callback")
-    req, ok := pb.(*protocol.AdminAddConfigReq)
-    if !ok {
-        log.Println("get AdminAddConfigReq pb error")
-        return
-    }
+    req := pb.(*protocol.AdminAddConfigReq)
+
     err := AddConfig(*req.ServiceKey, req.ConfKeys, req.Values)
     rsp := protocol.AdminExecuteRsp{}
     if err != nil {
@@ -129,11 +126,8 @@ func addConfigHandler(session *tcp.Session, pb proto.Message) {
 //AdminDelConfigReqId消息的回调函数
 func delConfigHandler(session *tcp.Session, pb proto.Message) {
     log.Println("debug: into delete config callback")
-    req, ok := pb.(*protocol.AdminDelConfigReq)
-    if !ok {
-        log.Println("get AdminDelConfigReq pb error")
-        return
-    }
+    req := pb.(*protocol.AdminDelConfigReq)
+
     err := DelConfig(*req.ServiceKey, uint(*req.Version))
     rsp := protocol.AdminExecuteRsp{}
     if err != nil {
@@ -177,12 +171,7 @@ func isDifferent(k1 []string, v1 []string, k2 []string, v2 []string) bool {
 //AdminUpdConfigReqId消息的回调函数
 func updConfigHandler(session *tcp.Session, pb proto.Message) {
     log.Println("debug: into update config callback")
-    req, ok := pb.(*protocol.AdminUpdConfigReq)
-    if !ok {
-        log.Println("get AdminUpdConfigReq pb error")
-        return
-    }
-
+    req := pb.(*protocol.AdminUpdConfigReq)
     rsp := protocol.AdminExecuteRsp{}
 
     originKeys, originValues, version := ConfigData.GetData(*req.ServiceKey)
@@ -218,11 +207,7 @@ func updConfigHandler(session *tcp.Session, pb proto.Message) {
 //AdminGetConfigReqId消息的回调函数
 func getConfigHandler(session *tcp.Session, pb proto.Message) {
     log.Println("debug: into get config callback")
-    req, ok := pb.(*protocol.AdminGetConfigReq)
-    if !ok {
-        log.Println("get AdminGetConfigReq pb error")
-        return
-    }
+    req := pb.(*protocol.AdminGetConfigReq)
     rsp := protocol.AdminGetConfigRsp{}
     rsp.ServiceKey = proto.String(*req.ServiceKey)
     confKeys, values, version := ConfigData.GetData(*req.ServiceKey)
@@ -248,7 +233,7 @@ func StartAdminService() {
     }
     AdminServer = server
     //注册消息ID与PB的映射
-    AdminServer.SetMapping(adminMapping)
+    AdminServer.SetFactory(adminMsgFactory)
     //注册所有回调
     AdminServer.RegHandler(protocol.AdminAddConfigReqId, addConfigHandler)
     AdminServer.RegHandler(protocol.AdminDelConfigReqId, delConfigHandler)
