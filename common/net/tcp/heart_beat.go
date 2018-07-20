@@ -77,17 +77,20 @@ func (list *ActiveList) HeartbeatProbe() {
     list.mutex.Unlock()
     //关闭非活跃连接
     for _, session := range lost {
-        log.Printf("connection %s is inactive too long, so close it\n", session.conn.RemoteAddr().String())
+        log.Printf("connection %s is inactive too long, so close it\n", session.Addr())
         session.Close()
     }
-    //发心跳
-    req := &protocol.HeartbeatReq{
-        Useless:proto.Bool(true),
-    }
-    for _, session := range probe {
-        if session.SendData(HeartbeatReqId, req) {
-            //设置最新发送心跳时间
-            session.HeartBeatReqTs = currentTs
+
+    if len(probe) > 0 {
+        //发心跳
+        req := &protocol.HeartbeatReq{
+            Useless:proto.Bool(true),
+        }
+        for _, session := range probe {
+            if session.SendData(HeartbeatReqId, req) {
+                //设置最新发送心跳时间
+                session.HeartBeatReqTs = currentTs
+            }
         }
     }
 }

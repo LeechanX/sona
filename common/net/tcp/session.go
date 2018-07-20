@@ -57,6 +57,10 @@ func CreateSession(server *Server, c *net.TCPConn) {
     go session.receiver()
 }
 
+func (session *Session) Addr() string {
+    return session.conn.RemoteAddr().String()
+}
+
 //此会话订阅了某信息
 func (session *Session) Subscribe(infoKey interface{}) {
     session.subscribeList[infoKey] = true
