@@ -26,6 +26,7 @@ func brokerMsgFactory(cmdId uint) proto.Message {
 //SubscribeReqId消息的回调函数
 func SubscribeHandler(session *tcp.Session, pb proto.Message) {
     req := pb.(*protocol.SubscribeReq)
+    log.Printf("agent %s tries to subscribe service %s\n", session.RemoteAddr().String(), *req.ServiceKey)
     //订阅：此连接对*req.ServiceKey感兴趣
     session.Subscribe(*req.ServiceKey)
     //创建回包
@@ -34,9 +35,11 @@ func SubscribeHandler(session *tcp.Session, pb proto.Message) {
     //查看是否有此配置
     keys, values, version := ConfigData.GetData(*req.ServiceKey)
     if keys == nil {
+        log.Printf("subscribe service %s failed\n", *req.ServiceKey)
         rsp.Code = proto.Int32(-1)//订阅失败
         rsp.Version = proto.Uint32(0)
     } else {
+        log.Printf("subscribe service %s successfully\n", *req.ServiceKey)
         rsp.Code = proto.Int32(0)//订阅成功
         //填充配置
         rsp.Version = proto.Uint32(uint32(version))
@@ -49,6 +52,7 @@ func SubscribeHandler(session *tcp.Session, pb proto.Message) {
 
 //PullServiceConfigReqId消息的回调函数
 func PullConfigHandler(session *tcp.Session, pb proto.Message) {
+    log.Println("DEBUG: into pull configure request callback")
     req := pb.(*protocol.PullServiceConfigReq)
     //订阅：此连接对*req.ServiceKey感兴趣
     session.Subscribe(*req.ServiceKey)
