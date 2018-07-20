@@ -42,8 +42,7 @@ func (sl *SubscribeList) UnSubscribe(infoKey interface{}, session *Session) {
 func (sl *SubscribeList) GetSubscribers(infoKey interface{}) []*Session {
     sl.rwLock.RLock()
     defer sl.rwLock.RUnlock()
-    //连接集合
-    sessionList := make([]*Session, 0)
+    sessionList := make([]*Session, 0)//连接集合
     if _, ok := sl.list[infoKey];ok {
         for session := range sl.list[infoKey] {
             sessionList = append(sessionList, session)
@@ -51,4 +50,3 @@ func (sl *SubscribeList) GetSubscribers(infoKey interface{}) []*Session {
     }
     return sessionList
 }
-

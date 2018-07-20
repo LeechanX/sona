@@ -127,7 +127,7 @@ func (server *Server) receiver() {
         }
         req := server.factory(cmdId)
         if req == nil {
-            log.Printf("no pb mapping for cmd id: %d\n", cmdId)
+            log.Printf("have no packet factory for cmd id: %d\n", cmdId)
             continue
         }
         if err := proto.Unmarshal(pbData, req);err != nil {
