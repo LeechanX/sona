@@ -165,76 +165,44 @@ func (cc *ConfigController) addNewService(serviceKey string, remoteVersion uint,
     cc.indexLock.Release()
     return nil
 }
-/*
-//写配置：为某serviceKey新增一个、修改一个
-func (cc *ConfigController) Set(serviceKey string, configKey string, value string, remoteVersion uint) error {
-    //先获取索引位置
-    cc.indexLock.RDLock()
-    index, localVersion := GetServiceIndex(cc.indexHub, serviceKey)
-    cc.indexLock.Release()
-    if index == -1 {
-        //则需要新增service
-        return cc.addNewService(serviceKey, remoteVersion, []string{configKey}, []string{value})
-    }
-    if remoteVersion <= localVersion {
-        return errors.New(fmt.Sprintf("remote service %s configure is too old", serviceKey))
-    }
-    //更新
-    cc.confLocks[index].WRLock()
-    defer cc.confLocks[index].Release()
-    if !AddOrUpdateConf(cc.confHub, uint(index), configKey, value) {
-        return errors.New("no more space to store new service configures")
-    }
-    return nil
-}
-*/
-/*
-//删除一个配置
-func (cc *ConfigController) RemoveOne(serviceKey string, configKey string, remoteVersion uint) {
-    //先获取索引位置
-    cc.indexLock.RDLock()
-    index, localVersion := GetServiceIndex(cc.indexHub, serviceKey)
-    cc.indexLock.Release()
 
-    if index == -1 || remoteVersion <= localVersion{
+//删除某service的配置 带版本 （broker数据到来触发）
+func (cc *ConfigController) RemoveService(serviceKey string, remoteVersion uint) {
+    //先获取索引位置
+    cc.indexLock.WRLock()
+    index, localVersion := GetServiceIndex(cc.indexHub, serviceKey)
+    if index == -1 || localVersion >= remoteVersion {
+        //不存在或远程版本太低 放弃
+        cc.indexLock.Release()
         return
     }
 
-    //删除这一项
+    RemoveService(cc.indexHub, serviceKey)
+    cc.indexLock.Release()
+
     cc.confLocks[index].WRLock()
-    RemoveOneConf(cc.confHub, uint(index), configKey)
-    confCnt := GetConfCount(cc.confHub, uint(index))
+    RemoveServiceConf(cc.confHub, uint(index))
     cc.confLocks[index].Release()
-
-    cc.indexLock.WRLock()
-    defer cc.indexLock.Release()
-    if confCnt == 0 {
-        //此service已空，删除
-        RemoveService(cc.indexHub, serviceKey)
-    } else {
-        //更新最新版本
-        UpdServiceVersion(cc.indexHub, serviceKey, remoteVersion)
-    }
 }
-*/
 
-//删除某service的配置
-func (cc *ConfigController) RemoveService(serviceKey string) {
+//强制删除某service的配置 无视版本（清理G触发）
+func (cc *ConfigController) ForceRemoveService(serviceKey string) {
     //先获取索引位置
     cc.indexLock.WRLock()
     index, _ := GetServiceIndex(cc.indexHub, serviceKey)
-    if index != -1 {
-        RemoveService(cc.indexHub, serviceKey)
+    if index == -1 {
+        //不存在 放弃
+        cc.indexLock.Release()
+        return
     }
+    RemoveService(cc.indexHub, serviceKey)
     cc.indexLock.Release()
-    if index != -1 {
-        cc.confLocks[index].WRLock()
-        RemoveServiceConf(cc.confHub, uint(index))
-        cc.confLocks[index].Release()
-    }
+    cc.confLocks[index].WRLock()
+    defer cc.confLocks[index].Release()
+    RemoveServiceConf(cc.confHub, uint(index))
 }
 
-//更新一个service的配置，来自于pull的回复
+//更新一个service的配置，来自于pull的回复 前提：配置数据不为空
 func (cc *ConfigController) UpdateService(serviceKey string, remoteVersion uint, configKeys []string, values []string) error {
     cc.indexLock.RDLock()
     index, localVersion := GetServiceIndex(cc.indexHub, serviceKey)
@@ -253,14 +221,9 @@ func (cc *ConfigController) UpdateService(serviceKey string, remoteVersion uint,
     //先排序
     sortedKeys, sortedValues := common.SortKV(configKeys, values)
     cc.confLocks[index].WRLock()
-    if len(configKeys) == 0 {
-        //说明远端删除了整个service
-        RemoveServiceConf(cc.confHub, uint(index))
-    } else {
-        //否则，重置新的serviceConf
-        AddServiceConf(cc.confHub, uint(index), sortedKeys, sortedValues)
-    }
-    cc.confLocks[index].Release()
+    defer cc.confLocks[index].Release()
+    //重置新的serviceConf
+    AddServiceConf(cc.confHub, uint(index), sortedKeys, sortedValues)
     return nil
 }
 

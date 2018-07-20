@@ -35,16 +35,24 @@ func SubscribeHandler(session *tcp.Session, pb proto.Message) {
     //查看是否有此配置
     keys, values, version := ConfigData.GetData(*req.ServiceKey)
     if keys == nil {
-        log.Printf("subscribe service %s failed\n", *req.ServiceKey)
+        log.Printf("subscribe service %s failed because of no this service\n", *req.ServiceKey)
         rsp.Code = proto.Int32(-1)//订阅失败
+        rsp.Error = proto.String("data does not exist")
         rsp.Version = proto.Uint32(0)
     } else {
-        log.Printf("subscribe service %s successfully\n", *req.ServiceKey)
-        rsp.Code = proto.Int32(0)//订阅成功
-        //填充配置
-        rsp.Version = proto.Uint32(uint32(version))
-        rsp.ConfKeys = keys
-        rsp.Values = values
+        if len(keys) == 0 {
+            log.Printf("subscribe service %s failed because of this service's data is empty\n", *req.ServiceKey)
+            rsp.Code = proto.Int32(-1)//订阅失败
+            rsp.Error = proto.String("data is empty")
+            rsp.Version = proto.Uint32(0)
+        } else {
+            log.Printf("subscribe service %s successfully\n", *req.ServiceKey)
+            rsp.Code = proto.Int32(0)//订阅成功
+            //填充配置
+            rsp.Version = proto.Uint32(uint32(version))
+            rsp.ConfKeys = keys
+            rsp.Values = values
+        }
     }
     //回包
     session.SendData(protocol.SubscribeBrokerRspId, &rsp)

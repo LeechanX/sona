@@ -29,7 +29,7 @@ func SubscribeResultHandler(_ *client.AsyncClient, pb proto.Message) {
         log.Printf("subscribe for %s successfully\n", *req.ServiceKey)
         ConfController.UpdateService(*req.ServiceKey, uint(*req.Version), req.ConfKeys, req.Values)
     } else {
-        log.Printf("subscribe for %s failed\n", *req.ServiceKey)
+        log.Printf("subscribe for %s failed because %s\n", *req.ServiceKey, *req.Error)
     }
     rsp := &protocol.SubscribeAgentRsp{}
     rsp.ServiceKey = proto.String(*req.ServiceKey)
@@ -46,15 +46,25 @@ func SubscribeResultHandler(_ *client.AsyncClient, pb proto.Message) {
 func PushConfigHandler(_ *client.AsyncClient, pb proto.Message) {
     req := pb.(*protocol.PushServiceConfigReq)
     log.Printf("sona agent received the push request for service %s\n", *req.ServiceKey)
-    //执行更新
-    ConfController.UpdateService(*req.ServiceKey, uint(*req.Version), req.ConfKeys, req.Values)
+    if len(req.ConfKeys) == 0 {
+        //尝试删除数据
+        ConfController.RemoveService(*req.ServiceKey, uint(*req.Version))
+    } else {
+        //尝试数据更新
+        ConfController.UpdateService(*req.ServiceKey, uint(*req.Version), req.ConfKeys, req.Values)
+    }
 }
 
 //PullServiceConfigRspId消息的回调函数
 func PullResultHandler(_ *client.AsyncClient, pb proto.Message) {
     req := pb.(*protocol.PullServiceConfigRsp)
-    //执行更新
-    ConfController.UpdateService(*req.ServiceKey, uint(*req.Version), req.ConfKeys, req.Values)
+    if len(req.ConfKeys) == 0 {
+        //尝试删除数据
+        ConfController.RemoveService(*req.ServiceKey, uint(*req.Version))
+    } else {
+        //尝试数据更新
+        ConfController.UpdateService(*req.ServiceKey, uint(*req.Version), req.ConfKeys, req.Values)
+    }
 }
 
 func CreateBrokerClient(ip string, port int, enableHeartbeat bool) *client.AsyncClient {
