@@ -92,6 +92,7 @@ func (c *AsyncClient) HeartbeatProbe() {
                 c.close()
             } else if currentTs - lastSendTs >= tcp.HeartbeatPeriod {
                 //发心跳
+                lastSendTs = currentTs
                 c.Send(tcp.HeartbeatReqId, req)
             }
         }

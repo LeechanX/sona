@@ -4,10 +4,10 @@ import (
     "net"
     "log"
     "fmt"
+    "time"
     "errors"
     "sync/atomic"
     "github.com/golang/protobuf/proto"
-    "time"
 )
 
 //消息ID与消息PB的映射函数类型，根据消息ID给出对应的PB包
