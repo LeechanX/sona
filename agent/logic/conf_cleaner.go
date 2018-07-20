@@ -7,6 +7,10 @@ import (
     "sona/core"
 )
 
+const (
+    CleanPeriod int64 = 3600
+)
+
 //周期性检查是否有待清理的serviceKey
 type AccessRecord struct {
     lastUseTime map[string]int64
@@ -39,7 +43,7 @@ func (r *AccessRecord) RemoveOutdated() []string {
     outdated := make([]string, 0)
     for serviceKey, ts := range r.lastUseTime {
         //获取一小时内都没使用的serviceKey
-        if current - ts >= 3600 {
+        if current - ts >= CleanPeriod {
             outdated = append(outdated, serviceKey)
         }
     }
