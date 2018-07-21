@@ -68,11 +68,14 @@ func PullConfigHandler(session *tcp.Session, pb proto.Message) {
     rsp := protocol.PullServiceConfigRsp{}
     rsp.ServiceKey = proto.String(*req.ServiceKey)
 
-    //查看是否有此配置 (必然有)
+    //查看是否有此配置
     keys, values, version := ConfigData.GetData(*req.ServiceKey)
+    if keys == nil {
+        //TODO:配置压根不存在, 主备切换后可能遇到此情况
+    }
     rsp.Version = proto.Uint32(uint32(version))
     if version > uint(*req.Version) {
-        //agent端的版本过时了
+        //说明配置存在且agent端的版本过时了
         rsp.ConfKeys = keys
         rsp.Values = values
     }
