@@ -51,11 +51,11 @@ func (c *Client) Read(timeout time.Duration, cmdId uint, packet proto.Message) e
 func (c *Client) Send(cmdId uint, pb proto.Message) error {
     data := protocol.EncodeMessage(cmdId, pb)
     c.conn.SetWriteDeadline(time.Now().Add(50 * time.Millisecond))
-    length, error := c.conn.Write(data)
+    length, err := c.conn.Write(data)
     if length < len(data) {
         return errors.New("write incompletely")
     }
-    return error
+    return err
 }
 
 func (c *Client) Close() {

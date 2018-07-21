@@ -267,17 +267,6 @@ func searchOneConf(confHub *[TotalConfMemSize]byte, idx uint, confKey string) (u
     return confCnt, false
 }
 
-//获取某service的全部配置
-func GetServiceConf(confHub *[TotalConfMemSize]byte, idx uint) map[string]string {
-    confCnt := GetConfCount(confHub, idx)
-    allConf := make(map[string]string)
-    for i := uint(0);i < confCnt;i++ {
-        k, v := getOneConf(confHub, idx, i)
-        allConf[k] = v
-    }
-    return allConf
-}
-
 //添加一个service的配置，前提：confKey已按照字典序排序
 func AddServiceConf(confHub *[TotalConfMemSize]byte, idx uint, confKeys []string, values []string) {
     var start = idx * OneBucketCap
@@ -290,60 +279,8 @@ func AddServiceConf(confHub *[TotalConfMemSize]byte, idx uint, confKeys []string
     }
 }
 
-//为某service添加、修改一个配置
-func AddOrUpdateConf(confHub *[TotalConfMemSize]byte, idx uint, confKey string, value string) bool {
-    confCnt := GetConfCount(confHub, idx)
-    pos, exist := searchOneConf(confHub, idx, confKey)
-    if exist {
-        //修改：重设置值
-        setOneConf(confHub, idx, pos, confKey, value)
-        return true
-    }
-    //新增
-    if confCnt == ServiceConfLimit {
-        //已经满了
-        return false
-    }
-    if pos == confCnt {
-        //尾部添加即可
-        setOneConf(confHub, idx, confCnt, confKey, value)
-    } else {
-        //整体后移
-        start := idx * OneBucketCap + pos * (2 + ConfKeyCap + 2 + ConfValueCap)
-        copy(confHub[start + (2 + ConfKeyCap + 2 + ConfValueCap):
-            start + (2 + ConfKeyCap + 2 + ConfValueCap) * (confCnt - pos + 1)],
-            confHub[start:
-                start + (2 + ConfKeyCap + 2 + ConfValueCap) * (confCnt - pos)])
-        setOneConf(confHub, idx, pos, confKey, value)
-    }
-    //配置个数+1
-    start := idx * OneBucketCap
-    binary.LittleEndian.PutUint16(confHub[start:start + 2], uint16(confCnt + 1))
-    return true
-}
-
 //删除某service的配置
 func RemoveServiceConf(confHub *[TotalConfMemSize]byte, idx uint) {
     start := idx * OneBucketCap
     binary.LittleEndian.PutUint16(confHub[start:start + 2], 0)
-}
-
-//为某service删除一个配置
-func RemoveOneConf(confHub *[TotalConfMemSize]byte, idx uint, confKey string) {
-    confCnt := GetConfCount(confHub, idx)
-    pos, exist := searchOneConf(confHub, idx, confKey)
-    if !exist {
-        return
-    }
-    if pos != confCnt - 1 {
-        //整体前移
-        start := idx * OneBucketCap + pos * (2 + ConfKeyCap + 2 + ConfValueCap)
-        behind := confCnt - 1 - pos
-        copy(confHub[start:start + (2 + ConfKeyCap + 2 + ConfValueCap) * behind],
-            confHub[start + (2 + ConfKeyCap + 2 + ConfValueCap):
-                start + (2 + ConfKeyCap + 2 + ConfValueCap) * (behind - 1)])
-    }
-    //配置个数-1
-    start := idx * OneBucketCap
-    binary.LittleEndian.PutUint16(confHub[start:start + 2], uint16(confCnt - 1))
 }
