@@ -195,12 +195,15 @@ func TestMixed(t *testing.T) {
 
 func TestConfigControllerClean(t *testing.T) {
     allServiceKeys := configController.GetAllServiceKeys()
+    configController.Close()
+
+    configController2, _ := GetConfigController()
 
     for serviceKey, version := range allServiceKeys {
-        configController.RemoveService(serviceKey, version + 1)
+        configController2.RemoveService(serviceKey, version + 1)
     }
 
-    num := len(configController.GetAllServiceKeys())
+    num := len(configController2.GetAllServiceKeys())
     if num != 0 {
         t.Errorf("after clean, number is %d\n", num)
     }
