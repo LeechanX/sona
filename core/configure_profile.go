@@ -226,7 +226,7 @@ func (cc *ConfigController) UpdateService(serviceKey string, remoteVersion uint,
     AddServiceConf(cc.confHub, uint(index), sortedKeys, sortedValues)
     return nil
 }
-
+/*
 //读配置
 func (cc *ConfigController) Get(serviceKey string, confKey string) string {
     cc.indexLock.RDLock()
@@ -240,7 +240,7 @@ func (cc *ConfigController) Get(serviceKey string, confKey string) string {
     cc.confLocks[index].RDLock()
     defer cc.confLocks[index].Release()
     return GetConf(cc.confHub, uint(index), confKey)
-}
+}*/
 
 //配置获取
 type ConfigGetter struct {
