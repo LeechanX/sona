@@ -76,6 +76,22 @@ func AddDocument(serviceKey string, version uint, confKeys []string, confValues 
     })
 }
 
+//获取数据
+func GetDocument(serviceKey string) (uint, []string, []string, error) {
+    session, collection, err := getCollection()
+    if err != nil {
+        return 0, nil, nil, err
+    }
+    defer session.Close()
+
+    result := ConfigureDocument{}
+    err = collection.Find(bson.M{"serviceKey":serviceKey}).One(&result)
+    if err != nil {
+        return 0, nil, nil, err
+    }
+    return result.Version, result.ConfKeys, result.ConfValues, nil
+}
+
 //修改数据
 func UpdateDocument(serviceKey string, version uint, confKeys []string, confValues []string) error {
     session, collection, err := getCollection()
