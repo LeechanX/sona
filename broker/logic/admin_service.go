@@ -169,11 +169,11 @@ func isDifferent(k1 []string, v1 []string, k2 []string, v2 []string) bool {
 }
 
 //AdminUpdConfigReqId消息的回调函数
-func updConfigHandler(session *tcp.Session, pb proto.Message) {
+func updateConfigHandler(session *tcp.Session, pb proto.Message) {
     log.Println("debug: into update config callback")
     req := pb.(*protocol.AdminUpdConfigReq)
     rsp := protocol.AdminExecuteRsp{}
-
+    //在mongoDB中执行
     originKeys, originValues, version := ConfigData.GetData(*req.ServiceKey)
     if version != uint(*req.Version) {
         rsp.Code = proto.Int32(-1)
@@ -237,7 +237,7 @@ func StartAdminService() {
     //注册所有回调
     AdminServer.RegHandler(protocol.AdminAddConfigReqId, addConfigHandler)
     AdminServer.RegHandler(protocol.AdminDelConfigReqId, delConfigHandler)
-    AdminServer.RegHandler(protocol.AdminUpdConfigReqId, updConfigHandler)
+    AdminServer.RegHandler(protocol.AdminUpdConfigReqId, updateConfigHandler)
     AdminServer.RegHandler(protocol.AdminGetConfigReqId, getConfigHandler)
     //启动服务
     AdminServer.Start()
