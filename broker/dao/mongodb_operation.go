@@ -17,33 +17,34 @@ type ConfigureDocument struct {
 }
 
 //获取collection以便操作
-func getCollection() (*mgo.Session, *mgo.Collection) {
+func getCollection() (*mgo.Session, *mgo.Collection, error) {
     url := fmt.Sprintf("%s:%d", conf.GlobalConf.DbHost, conf.GlobalConf.DbPort)
     session, err := mgo.Dial(url)
     if err != nil {
         log.Printf("dial mongodb %s get %s\n", url, err)
-        return nil, nil
+        return nil, nil, err
     }
 
     collection := session.DB(conf.GlobalConf.DbName).C(conf.GlobalConf.DbCollectionName)
     if collection == nil {
         session.Close()
-        log.Printf("no database %s or collection %s\n", conf.GlobalConf.DbName, conf.GlobalConf.DbCollectionName)
-        return nil, nil
+        errLog := fmt.Sprintf("no database %s or collection %s\n", conf.GlobalConf.DbName, conf.GlobalConf.DbCollectionName)
+        log.Printf(errLog)
+        return nil, nil, errors.New(errLog)
     }
-    return session, collection
+    return session, collection, nil
 }
 
 //加载所有数据
 func ReloadAllData() ([]*ConfigureDocument, error) {
     log.Println("reload data from mongo db")
-    session, collection := getCollection()
-    if collection == nil {
-        return nil, errors.New("database error")
+    session, collection, err := getCollection()
+    if err != nil {
+        return nil, err
     }
     defer session.Close()
     results := make([]ConfigureDocument, 0)
-    err := collection.Find(bson.M{}).All(&results)
+    err = collection.Find(bson.M{}).All(&results)
     if err != nil {
         return nil, err
     }
@@ -62,9 +63,9 @@ func ReloadAllData() ([]*ConfigureDocument, error) {
 
 //新增数据，发起自admin添加
 func AddDocument(serviceKey string, version uint, confKeys []string, confValues []string) error {
-    session, collection := getCollection()
-    if collection == nil {
-        return errors.New("database error")
+    session, collection, err := getCollection()
+    if err != nil {
+        return err
     }
     defer session.Close()
     return collection.Insert(&ConfigureDocument{
@@ -75,11 +76,27 @@ func AddDocument(serviceKey string, version uint, confKeys []string, confValues 
     })
 }
 
+//获取数据
+func GetDocument(serviceKey string) (uint, []string, []string, error) {
+    session, collection, err := getCollection()
+    if err != nil {
+        return 0, nil, nil, err
+    }
+    defer session.Close()
+
+    result := ConfigureDocument{}
+    err = collection.Find(bson.M{"serviceKey":serviceKey}).One(&result)
+    if err != nil {
+        return 0, nil, nil, err
+    }
+    return result.Version, result.ConfKeys, result.ConfValues, nil
+}
+
 //修改数据
 func UpdateDocument(serviceKey string, version uint, confKeys []string, confValues []string) error {
-    session, collection := getCollection()
-    if collection == nil {
-        return errors.New("database error")
+    session, collection, err := getCollection()
+    if err != nil {
+        return err
     }
     defer session.Close()
     return collection.Update(bson.M{"serviceKey":serviceKey},
