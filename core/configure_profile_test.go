@@ -7,6 +7,7 @@ import (
 
 var configController *ConfigController
 var configGetter *ConfigGetter
+var valuePrefix string
 
 func TestConfigController_GetAllServiceKeys(t *testing.T) {
     allServiceKeys := configController.GetAllServiceKeys()
@@ -47,7 +48,7 @@ func TestConfigGetter_Get(t *testing.T) {
         serviceKey := fmt.Sprintf("test.servicekey.key-%d", i + 1)
         for j := 0;j < i + 1; j++ {
             confKey := fmt.Sprintf("service-%d.conf-%d", i, j)
-            expectConfValue := fmt.Sprintf("configure-value-%d", j)
+            expectConfValue := fmt.Sprintf("%s-configure-value-%d", valuePrefix, j)
             value := configGetter.Get(serviceKey, confKey)
             if value != expectConfValue {
                 t.Errorf("get service %s's %s value: expect %s actual %s\n", serviceKey, confKey, expectConfValue, value)
@@ -212,6 +213,11 @@ func TestConfigControllerClean(t *testing.T) {
 func TestMain(m *testing.M) {
     configController, _ = GetConfigController()
     configGetter, _ = GetConfigGetter()
+
+    for i := 0;i < 150;i++ {
+        valuePrefix += "."
+    }
+
     //set 99 config
     for i := 0;i < 99; i++ {
         serviceKey := fmt.Sprintf("test.servicekey.key-%d", i + 1)
@@ -221,10 +227,11 @@ func TestMain(m *testing.M) {
         values := make([]string, 0)
         for j := 0;j < i + 1; j++ {
             confKeys = append(confKeys, fmt.Sprintf("service-%d.conf-%d", i, j))
-            values = append(values, fmt.Sprintf("configure-value-%d", j))
+            values = append(values, fmt.Sprintf("%s-configure-value-%d", valuePrefix, j))
         }
         configController.UpdateService(serviceKey, version, confKeys, values)
     }
 
     m.Run()
 }
+

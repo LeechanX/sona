@@ -9,7 +9,8 @@ const (
     ServiceKeyCap = uint(92)
     //"section.key"组成服务的一个配置，各字段限长30字节
     ConfKeyCap = uint(61)
-    ConfValueCap = uint(30)
+    //value支持最大200字节
+    ConfValueCap = uint(200)
     ServiceConfLimit = uint(100)
 
     //一个bucket用于存放一个Service的配置，可存多少种Service
