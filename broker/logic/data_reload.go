@@ -15,8 +15,6 @@ func PeriodReload() {
         if err != nil {
             log.Printf("load data from mongodb meet error: %s\n", err)
             continue
-        } else {
-            log.Println("reload data from mongodb ok")
         }
         //筛选出可能要更新的数据
         candidate := make([]*dao.ServiceData, 0)
@@ -29,6 +27,10 @@ func PeriodReload() {
                 //库中版本更大，数据more新
                 candidate = append(candidate, serviceData)
             }
+        }
+        if len(candidate) > 0 {
+            log.Println("after reload, database may have fresh data")
+            log.Println("try to write fresh data to cache")
         }
         //尝试更新到缓存中
         for _, serviceData := range candidate {

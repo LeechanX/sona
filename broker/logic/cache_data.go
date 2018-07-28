@@ -3,6 +3,7 @@ package logic
 import (
     "sync"
     "sona/broker/dao"
+    "log"
 )
 
 //data:读多写少 key: string, value: string
@@ -54,9 +55,11 @@ func (cd *CacheConfigData) WriteBack(serviceKey string, newVersion uint, configK
     defer cd.rwMutex.Unlock()
     if originServiceData, ok := cd.data[serviceKey];ok {
         if originServiceData.Version < newVersion {
+            log.Printf("write back to cache for service %s\n", serviceKey)
             cd.data[serviceKey] = serviceData
         }
     } else {
+        log.Printf("write back to cache for service %s\n", serviceKey)
         cd.data[serviceKey] = serviceData
     }
 }
