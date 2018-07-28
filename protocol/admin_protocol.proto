@@ -6,7 +6,7 @@ message AdminAddConfigReq {
     repeated string values     = 3;
 }
 
-message AdminDelConfigReq {
+message AdminCleanConfigReq {
     required string serviceKey = 1;
     required uint32 version    = 2;
 }

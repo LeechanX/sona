@@ -10,7 +10,7 @@ const (
     PullServiceConfigRspId = 7//broker回复agent一个服务的最新配置
 
     AdminAddConfigReqId   = 21//admin向broker发起新增命令
-    AdminDelConfigReqId   = 22//admin向broker发起删除命令
+    AdminCleanConfigReqId = 22//admin向broker发起删除命令
     AdminUpdConfigReqId   = 23//admin向broker发起修改命令
     AdminExecuteRspId     = 24//broker回复admin执行结果
     AdminGetConfigReqId   = 25//admin向broker发起获取请求

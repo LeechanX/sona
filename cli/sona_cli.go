@@ -134,10 +134,10 @@ func del(serviceKey string, client *client.SyncClient) {
     var ensure string
     fmt.Scanf("%s", &ensure)
     if ensure == "y" || ensure == "Y" {
-        req := &protocol.AdminDelConfigReq{}
+        req := &protocol.AdminCleanConfigReq{}
         req.ServiceKey = proto.String(serviceKey)
         req.Version = proto.Uint32(uint32(serviceConf.version))
-        err := client.Send(protocol.AdminDelConfigReqId, req)
+        err := client.Send(protocol.AdminCleanConfigReqId, req)
         if err != nil {
             fmt.Println(err)
             return
