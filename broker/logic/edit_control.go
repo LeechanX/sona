@@ -9,6 +9,11 @@ type EditControl struct {
 
 var EditingControl EditControl//记录正在编辑
 
+//create map
+func init() {
+    EditingControl.keys = make(map[string]bool)
+}
+
 //标记某service key处于“编辑”状态
 //若已在编辑中，返回false
 //否则返回true
