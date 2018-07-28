@@ -33,7 +33,7 @@ func SubscribeHandler(session *tcp.Session, pb proto.Message) {
     rsp := protocol.SubscribeBrokerRsp{}
     rsp.ServiceKey = proto.String(*req.ServiceKey)
     //查看是否有此配置
-    keys, values, version := ConfigData.GetData(*req.ServiceKey)
+    keys, values, version := CacheData.GetData(*req.ServiceKey)
     if keys == nil {
         log.Printf("subscribe service %s failed because of no this service\n", *req.ServiceKey)
         rsp.Code = proto.Int32(-1)//订阅失败
@@ -69,16 +69,12 @@ func PullConfigHandler(session *tcp.Session, pb proto.Message) {
     rsp.ServiceKey = proto.String(*req.ServiceKey)
 
     //查看是否有此配置
-    keys, values, version := ConfigData.GetData(*req.ServiceKey)
-    if keys == nil {
-        //TODO:配置压根不存在, 主备切换后可能遇到此情况
-    }
+    keys, values, version := CacheData.GetData(*req.ServiceKey)
     rsp.Version = proto.Uint32(uint32(version))
-    if version > uint(*req.Version) {
-        //说明配置存在且agent端的版本过时了
-        rsp.ConfKeys = keys
-        rsp.Values = values
-    }
+
+    rsp.ConfKeys = keys
+    rsp.Values = values
+
     //回包
     session.SendData(protocol.PullServiceConfigRspId, &rsp)
 }

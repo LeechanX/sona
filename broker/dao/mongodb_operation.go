@@ -2,14 +2,14 @@ package dao
 
 import (
     "fmt"
+    "log"
     "errors"
     "gopkg.in/mgo.v2"
     "gopkg.in/mgo.v2/bson"
     "sona/broker/conf"
-    "log"
 )
 
-type ConfigureDocument struct {
+type ServiceData struct {
     ServiceKey string `bson:"serviceKey"`
     Version uint `bson:"version"`
     ConfKeys []string `bson:"confKeys"`
@@ -36,27 +36,27 @@ func getCollection() (*mgo.Session, *mgo.Collection, error) {
 }
 
 //加载所有数据
-func ReloadAllData() ([]*ConfigureDocument, error) {
+func ReloadAllData() (map[string]*ServiceData, error) {
     log.Println("reload data from mongo db")
     session, collection, err := getCollection()
     if err != nil {
         return nil, err
     }
     defer session.Close()
-    results := make([]ConfigureDocument, 0)
+    results := make([]ServiceData, 0)
     err = collection.Find(bson.M{}).All(&results)
     if err != nil {
         return nil, err
     }
 
-    data := make([]*ConfigureDocument, 0)
+    data := make(map[string]*ServiceData)
     /* 错误，result变量仅被创建了一次，导致&result一直指向同样的变量
     for _, result := range results {
-        data = append(data, &result)
+        data[result.ServiceKey] = &result
     }
     */
     for i := 0;i < len(results);i++ {
-        data = append(data, &results[i])
+        data[results[i].ServiceKey] = &results[i]
     }
     return data, nil
 }
@@ -68,7 +68,7 @@ func AddDocument(serviceKey string, version uint, confKeys []string, confValues 
         return err
     }
     defer session.Close()
-    return collection.Insert(&ConfigureDocument{
+    return collection.Insert(&ServiceData{
         ServiceKey: serviceKey,
         Version: version,
         ConfKeys: confKeys,
@@ -84,7 +84,7 @@ func GetDocument(serviceKey string) (uint, []string, []string, error) {
     }
     defer session.Close()
 
-    result := ConfigureDocument{}
+    result := ServiceData{}
     err = collection.Find(bson.M{"serviceKey":serviceKey}).One(&result)
     if err != nil {
         return 0, nil, nil, err
@@ -100,7 +100,7 @@ func UpdateDocument(serviceKey string, version uint, confKeys []string, confValu
     }
     defer session.Close()
     return collection.Update(bson.M{"serviceKey":serviceKey},
-    &ConfigureDocument{
+    &ServiceData{
         ServiceKey: serviceKey,
         Version: version,
         ConfKeys: confKeys,
