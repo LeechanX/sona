@@ -52,6 +52,8 @@ if err == nil {
 ## 安装
 
 依赖：
+
 mongoDB（可单点，但建议主备）
+
 keepalived(可不安装，如果不在意broker单点的话)
 
