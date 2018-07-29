@@ -130,7 +130,7 @@ func del(serviceKey string, client *client.SyncClient) {
     if serviceConf == nil {
         return
     }
-    fmt.Printf("Delete? (y/n): ")
+    fmt.Printf("Clean? (y/n): ")
     var ensure string
     fmt.Scanf("%s", &ensure)
     if ensure == "y" || ensure == "Y" {
@@ -151,7 +151,7 @@ func del(serviceKey string, client *client.SyncClient) {
             return
         }
         if *rsp.Code == 0 {
-            fmt.Println("Delete successfully")
+            fmt.Println("Clean successfully")
         } else {
             fmt.Println(*rsp.Error)
         }
