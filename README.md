@@ -10,10 +10,6 @@ Sona是一个go语言实现的高效、实时、高可用的linux分布式配置
 
 ```
 
-author by: leechanx<br/>
-contact: leechan8@outlook.com<br/>
-wechat: leechanx<br/>
-
 ## 特点
 
 sona配置中心采用了经典一中心(broker)多agent的分布式架构，基于共享内存下发、存储各节点所需配置，为业务提供KV方式访问每个配置内容
