@@ -3,7 +3,6 @@ package conf
 import (
     "os"
     "log"
-    "flag"
     "github.com/larspensjo/config"
 )
 
@@ -23,11 +22,9 @@ type GlobalConfigure struct {
 
 var GlobalConf GlobalConfigure
 
-func LoadGlobalConfig() {
-    cfgPath := flag.String("conf", "conf/sona-broker.ini", "configure file path")
-    flag.Parse()
+func LoadGlobalConfig(path string) {
     //加载配置文件
-    cfg, err := config.ReadDefault(*cfgPath)
+    cfg, err := config.ReadDefault(path)
     if err != nil {
         log.Printf("load configure path error: %s\n", err)
         os.Exit(1)
