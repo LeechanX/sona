@@ -57,5 +57,7 @@ if err == nil {
 
 - 将本项目git clone到您的`$GOPATH`下
 - 进入`$GOPATH/sona`目录下
-- 执行`make`进行编译
-- TODO...
+- 执行`make`进行编译，所有可执行文件sona_agent、sona_broker将产生在`bin`目录下
+- 编辑broker配置文件（示例在`broker/conf/`目录下），后执行`bin/sona_broker -c 配置文件路径`启动broker
+- 编辑agent配置文件（示例在`agent/conf/`目录下），后执行`bin/sona_agent -c 配置文件路径`启动agent
+- 所有语言的api位于`api`目录下，自行使用即可
