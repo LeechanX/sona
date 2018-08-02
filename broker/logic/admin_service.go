@@ -94,7 +94,7 @@ func AddConfig(serviceKey string, confKeys []string, values []string) error {
         agent.SendData(protocol.PushServiceConfigReqId, &pushReq)
     }
     //回写缓存
-    CacheData.WriteBack(serviceKey, 1, confKeys, values)
+    CacheLayer.WriteBack(serviceKey, 1, confKeys, values)
     return nil
 }
 
@@ -147,7 +147,7 @@ func UpdateConfig(serviceKey string, version uint, confKeys []string, values []s
         agent.SendData(protocol.PushServiceConfigReqId, &pushReq)
     }
     //回写缓存
-    CacheData.WriteBack(serviceKey, newVersion, confKeys, values)
+    CacheLayer.WriteBack(serviceKey, newVersion, confKeys, values)
     return nil
 }
 
@@ -230,8 +230,8 @@ func getConfigHandler(session *tcp.Session, pb proto.Message) {
     rsp := protocol.AdminGetConfigRsp{}
     rsp.ServiceKey = proto.String(*req.ServiceKey)
     //直接在缓存中读取
-    confKeys, values, version := CacheData.GetData(*req.ServiceKey)
-    if confKeys == nil {
+    confKeys, values, version := CacheLayer.GetData(*req.ServiceKey)
+    if version == 0 {
         //不存在
         rsp.Code = proto.Int32(-1)
         rsp.Version = proto.Uint32(0)

@@ -18,6 +18,7 @@ type GlobalConfigure struct {
     DbPort int
     DbName string
     DbCollectionName string
+    CacheExpiredTime int
 }
 
 var GlobalConf GlobalConfigure
@@ -95,5 +96,12 @@ func LoadGlobalConfig() {
     if err != nil {
         log.Printf("configure db-collection format error: %s\n", err)
         os.Exit(1)
+    }
+
+    if cfg.HasSection("core") {
+        GlobalConf.CacheExpiredTime, err = cfg.Int("core","cache_expired_time")
+        if err != nil {
+            GlobalConf.CacheExpiredTime = 100
+        }
     }
 }
