@@ -49,7 +49,13 @@ if err == nil {
 
 依赖：
 
-mongoDB（可单点，但建议主备）
+1、mongoDB（可单点，但建议主备）
 
-keepalived(可不安装，如果不在意broker单点的话)
+2、keepalived（可不安装，如果不在意broker单点的话）
 
+安装流程：
+
+- 将本项目git clone到您的`$GOPATH`下
+- 进入`$GOPATH/sona`目录下
+- 执行`make`进行编译
+- TODO...
