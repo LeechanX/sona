@@ -2,7 +2,9 @@ package main
 
 import (
     "log"
+    "fmt"
     "time"
+    "flag"
     "sona/core"
     "sona/common"
     "sona/agent/conf"
@@ -10,8 +12,16 @@ import (
 )
 
 func main() {
+    configPath := flag.String("c", "", "agent configure file path")
+    flag.Parse()
+
+    if *configPath == "" {
+        fmt.Println("agent configure file path is not specified")
+        return
+    }
+
     common.PrintLogo()
-    conf.LoadGlobalConfig()
+    conf.LoadGlobalConfig(*configPath)
     //创建共享内存控制者
     controller, err := core.GetConfigController()
     if err != nil {
