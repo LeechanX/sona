@@ -14,5 +14,6 @@ func main() {
     //启动另一个服务，用于服务于管理端事务操作
     go logic.StartAdminService()
     //主G负责周期性拉最新数据
-    logic.CacheLayer.ClearExpired(int64(conf.GlobalConf.CacheExpiredTime))
+    expiredTs := int64(conf.GlobalConf.CacheExpiredTime)
+    logic.CacheLayer.ClearExpired(expiredTs)
 }
