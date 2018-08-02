@@ -33,8 +33,8 @@ func SubscribeHandler(session *tcp.Session, pb proto.Message) {
     rsp := protocol.SubscribeBrokerRsp{}
     rsp.ServiceKey = proto.String(*req.ServiceKey)
     //查看是否有此配置
-    keys, values, version := CacheData.GetData(*req.ServiceKey)
-    if keys == nil {
+    keys, values, version := CacheLayer.GetData(*req.ServiceKey)
+    if version == 0 {
         log.Printf("subscribe service %s failed because of no this service\n", *req.ServiceKey)
         rsp.Code = proto.Int32(-1)//订阅失败
         rsp.Error = proto.String("data does not exist")
@@ -69,9 +69,8 @@ func PullConfigHandler(session *tcp.Session, pb proto.Message) {
     rsp.ServiceKey = proto.String(*req.ServiceKey)
 
     //查看是否有此配置
-    keys, values, version := CacheData.GetData(*req.ServiceKey)
+    keys, values, version := CacheLayer.GetData(*req.ServiceKey)
     rsp.Version = proto.Uint32(uint32(version))
-
     rsp.ConfKeys = keys
     rsp.Values = values
 
