@@ -24,16 +24,20 @@ func brokerClientMsgFactory(cmdId uint) proto.Message {
 func SubscribeResultHandler(_ *client.AsyncClient, pb proto.Message) {
     log.Println("debug: subscribe result callback")
     req := pb.(*protocol.SubscribeBrokerRsp)
+    rsp := &protocol.SubscribeAgentRsp{}
+    rsp.ServiceKey = proto.String(*req.ServiceKey)
+    rsp.Code = proto.Int32(*req.Code)
+
     if *req.Code == 0 {
         //订阅成功
         log.Printf("subscribe for %s successfully\n", *req.ServiceKey)
         ConfController.UpdateService(*req.ServiceKey, uint(*req.Version), req.ConfKeys, req.Values)
+        index, _ := ConfController.QueryIndex(*req.ServiceKey)
+        rsp.Index = proto.Uint32(uint32(index))
     } else {
         log.Printf("subscribe for %s failed because %s\n", *req.ServiceKey, *req.Error)
     }
-    rsp := &protocol.SubscribeAgentRsp{}
-    rsp.ServiceKey = proto.String(*req.ServiceKey)
-    rsp.Code = proto.Int32(*req.Code)
+
     //可能需要回复给biz
     //获取并删除UDP地址
     addrList := BizServer.SubscribeBook.GetSubscribers(*rsp.ServiceKey, true)

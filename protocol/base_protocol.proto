@@ -24,6 +24,7 @@ message SubscribeBrokerRsp {
 message SubscribeAgentRsp {
     required string serviceKey = 1;
     required int32  code       = 2;//是否订阅成功，0成功 -1失败
+    optional uint32 index      = 3;//索引
 }
 
 //broker推送给agent某服务的最新配置

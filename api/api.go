@@ -22,18 +22,24 @@ func GetApi(serviceKey string) (*SonaApi, error) {
         return nil, errors.New("not a valid sona service key")
     }
     api := SonaApi{}
-    getter, err := core.GetConfigGetter()
-    if err != nil {
-        return nil, err
-    }
     //create UDP client
     udpClient, err := client.CreateClient("127.0.0.1", 9901)
     if err != nil {
-        getter.Close()
+        return nil, err
+    }
+    api.udpClient = udpClient
+    //订阅
+    index, err := api.subscribe(serviceKey)
+    if err != nil {
+        //订阅错误
+        return nil, err
+    }
+    //订阅成功，创建getter
+    getter, err := core.GetConfigGetter(serviceKey, index)
+    if err != nil {
         return nil, err
     }
     api.getter = getter
-    api.udpClient = udpClient
     api.serviceKey = serviceKey
     api.subscribe(serviceKey)
     //启动一个保活routine:告诉agent我一直在使用此serviceKey
@@ -50,16 +56,17 @@ func (api *SonaApi) keepUsing() {
     }
 }
 
-func (api *SonaApi) subscribe(serviceKey string) error {
+//向agent发起订阅，返回值是：索引
+func (api *SonaApi) subscribe(serviceKey string) (uint, error) {
     if !core.IsValidityServiceKey(serviceKey) {
-        return errors.New("service key format error")
+        return core.ServiceBucketLimit, errors.New("service key format error")
     }
     //发起订阅消息
     req := &protocol.SubscribeReq{}
     req.ServiceKey = proto.String(serviceKey)
     err := api.udpClient.Send(protocol.SubscribeReqId, req)
     if err != nil {
-        return err
+        return core.ServiceBucketLimit, err
     }
 
     rsp := protocol.SubscribeAgentRsp{}
@@ -67,17 +74,19 @@ func (api *SonaApi) subscribe(serviceKey string) error {
     timeout := 300 * time.Millisecond
     err = api.udpClient.Read(timeout, protocol.SubscribeAgentRspId, &rsp)
     if err != nil {
-        return err
+        return core.ServiceBucketLimit, err
     }
     //收到包，处理
     if *rsp.ServiceKey != serviceKey {
-        return errors.New("udp receive error data")
+        return core.ServiceBucketLimit, errors.New("udp receive error data")
     }
     //订阅失败
     if *rsp.Code == -1 {
-        return errors.New("no such a service in system right now")
+        return core.ServiceBucketLimit, errors.New("no such a service in system right now")
     }
-    return nil
+    //订阅成功，获取版本
+    index := *rsp.Index
+    return uint(index), nil
 }
 
 //获取value
@@ -88,7 +97,7 @@ func (api *SonaApi) Get(section string, key string) string {
     if !core.IsValidityConfKey(confKey) {
         return ""
     }
-    return api.getter.Get(api.serviceKey, confKey)
+    return api.getter.Get(confKey)
 }
 
 //获取value并以列表解析
@@ -97,7 +106,7 @@ func (api *SonaApi) GetList(section string, key string) []string {
     if !core.IsValidityConfKey(confKey) {
         return nil
     }
-    value := api.getter.Get(api.serviceKey, confKey)
+    value := api.getter.Get(confKey)
     items := strings.Split(value, ",")
     for idx, item := range items {
         items[idx] = strings.TrimSpace(item)

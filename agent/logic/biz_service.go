@@ -32,10 +32,13 @@ func SubscribeReqHandler(server *udp.Server, addr *net.UDPAddr, pb proto.Message
     req := pb.(*protocol.SubscribeReq)
     //client向agent订阅配置
     log.Printf("received subscribe request for service %s\n", *req.ServiceKey)
-    if ConfController.IsServiceExist(*req.ServiceKey) {
-        //本地已经有了，则回复
+
+    index, err := ConfController.QueryIndex(*req.ServiceKey)
+    if err != nil {
+        //本地已经有了，则回复索引
         rsp := &protocol.SubscribeAgentRsp{}
         rsp.Code = proto.Int32(0)
+        rsp.Index = proto.Uint32(uint32(index))
         rsp.ServiceKey = proto.String(*req.ServiceKey)
         log.Println("this service is already in shared memory")
         server.Send(protocol.SubscribeAgentRspId, rsp, addr)
