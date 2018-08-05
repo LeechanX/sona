@@ -3,6 +3,7 @@ package core
 import (
     "os"
     "fmt"
+    "sync"
     "unsafe"
     "errors"
     "sona/common"
@@ -14,13 +15,13 @@ const (
 
 //配置管理
 type ConfigController struct {
-    indexShm *SharedMem
-    confShm *SharedMem
-    indexHub *[TotalIndexMemSize]byte
-    indexLock *WrFlock
-    confHub *[TotalConfMemSize]byte
+    sharedMemory *SharedMem
+    confMemory *[TotalConfMemSize]byte
     confLocks [ServiceBucketLimit]*WrFlock//管理services
     gLock *WrFlock//用于确保只有一个config-controller在本机运行
+
+    indexMap map[string]uint//位置管理,service Key=>position
+    indexLock sync.RWMutex//保护索引map
 }
 
 //创建一个配合控制
@@ -66,251 +67,217 @@ func GetConfigController() (*ConfigController, error) {
         }
         configController.confLocks[i] = cFlk
     }
-    //获取index文件锁
-    flockPath = fmt.Sprintf("%s/idx.lock", RootPath)
-    iFlk, err := getWrFlock(flockPath)
-    if err != nil {
-        //关闭所有已打开文件锁
-        for i := uint(0);i < ServiceBucketLimit; i++ {
-            configController.confLocks[i].Close()
-        }
-        return nil, err
-    }
-    configController.indexLock = iFlk
 
-    //获取index共享内存
-    mapPath := fmt.Sprintf("%s/idx.mmap", RootPath)
+    //获取conf共享内存
+    mapPath := fmt.Sprintf("%s/cfg.mmap", RootPath)
     m, err := attachSharedMem(mapPath, int(TotalConfMemSize))
     if err != nil {
         //关闭所有文件锁
         for i := uint(0);i < ServiceBucketLimit; i++ {
             configController.confLocks[i].Close()
         }
-        configController.indexLock.Close()
         return nil, err
     }
-    configController.indexShm = m
+    configController.sharedMemory = m
     //读取共享内存，转化为数组
-    configController.indexHub = (*[TotalIndexMemSize]byte)(
-        unsafe.Pointer(&configController.indexShm.bs[0]))
-
-    //获取conf共享内存
-    mapPath = fmt.Sprintf("%s/cfg.mmap", RootPath)
-    m, err = attachSharedMem(mapPath, int(TotalConfMemSize))
-    if err != nil {
-        //关闭所有文件锁
-        for i := uint(0);i < ServiceBucketLimit; i++ {
-            configController.confLocks[i].Close()
-        }
-        configController.indexLock.Close()
-        return nil, err
-    }
-    configController.confShm = m
-    //读取共享内存，转化为数组
-    configController.confHub = (*[TotalConfMemSize]byte)(
-        unsafe.Pointer(&configController.confShm.bs[0]))
+    configController.confMemory = (*[TotalConfMemSize]byte)(
+        unsafe.Pointer(&configController.sharedMemory.bs[0]))
     //已创建成功
+    //获取目前所有配置的索引
+    configController.indexMap = GetAllServiceIndex(configController.confMemory)
     return &configController, nil
 }
 
 //清理
 func (cc *ConfigController) Close() {
     //关闭共享内存
-    cc.indexShm.Close()
-    cc.confShm.Close()
+    cc.sharedMemory.Close()
     //关闭所有文件锁
     for i := uint(0);i < ServiceBucketLimit; i++ {
         cc.confLocks[i].Close()
     }
-    cc.indexLock.Close()
     cc.gLock.Release()
     cc.gLock.Close()
 }
 
-//获取当前所有serviceKey:版本
+//获取当前所有serviceKey与版本
 func (cc *ConfigController) GetAllServiceKeys() map[string]uint {
-    cc.indexLock.RDLock()
-    defer cc.indexLock.Release()
-    return GetAllService(cc.indexHub)
+    keys := make(map[string]uint)
+    for idx := uint(0);idx < ServiceBucketLimit; idx++ {
+        cc.confLocks[idx].RDLock()
+        serviceKey, version := GetServiceKey(cc.confMemory, idx)
+        cc.confLocks[idx].Release()
+        if version != 0 {
+            keys[serviceKey] = version
+        }
+    }
+    return keys
 }
 
 //某serviceKey是否存在
 func (cc *ConfigController) IsServiceExist(serviceKey string) bool {
-    cc.indexLock.RDLock()
-    defer cc.indexLock.Release()
-    ret, _ := GetServiceIndex(cc.indexHub, serviceKey)
-    return ret != -1
+    cc.indexLock.RLock()
+    defer cc.indexLock.RUnlock()
+    _, ok := cc.indexMap[serviceKey]
+    return ok
 }
 
-/*
- * 修改Tip：再操作具体conf，再更新index里的版本
-*/
+//获取第一个可用索引
+func (cc* ConfigController) GetFirstIndexFree() uint {
+    isFilled := make([]bool, ServiceBucketLimit)
+    cc.indexLock.RLock()
+    for _, index := range cc.indexMap {
+        //此位置已被填充
+        isFilled[index] = true
+    }
+    cc.indexLock.RUnlock()
+    for index := uint(0);index < ServiceBucketLimit;index++ {
+        if !isFilled[index] {
+            return index
+        }
+    }
+    return ServiceBucketLimit
+}
 
 //新增一个service配置
 func (cc *ConfigController) addNewService(serviceKey string, remoteVersion uint, configKeys []string, values []string) error {
-    index := GetFirstIndexFree(cc.indexHub)
+    index := cc.GetFirstIndexFree()
     if index == ServiceBucketLimit {
         //已经没空间了
         return errors.New("no more space to store new service configures")
     }
-    //设置conf
-    //先排序
+    //设置conf,先排序
     sortedKeys, sortedValues := common.SortKV(configKeys, values)
     cc.confLocks[index].WRLock()
-    AddServiceConf(cc.confHub, uint(index), sortedKeys, sortedValues)
+    AddServiceConf(cc.confMemory, uint(index), serviceKey, remoteVersion, sortedKeys, sortedValues)
     cc.confLocks[index].Release()
-    //新增到index hub中
-    cc.indexLock.WRLock()
-    InsertService(cc.indexHub, serviceKey, remoteVersion, index)
-    cc.indexLock.Release()
+    //更新到索引
+    cc.indexLock.Lock()
+    defer cc.indexLock.Unlock()
+    cc.indexMap[serviceKey] = index
     return nil
 }
 
 //删除某service的配置 带版本 （broker数据到来触发）
 func (cc *ConfigController) RemoveService(serviceKey string, remoteVersion uint) {
     //先获取索引位置
-    cc.indexLock.WRLock()
-    index, localVersion := GetServiceIndex(cc.indexHub, serviceKey)
-    if index == -1 || localVersion >= remoteVersion {
-        //不存在或远程版本太低 放弃
-        cc.indexLock.Release()
+    cc.indexLock.Lock()
+    index, ok := cc.indexMap[serviceKey]
+    cc.indexLock.Unlock()
+    if !ok {
+        //不存在
+        return
+    }
+    //获取版本
+    _, localVersion := GetServiceKey(cc.confMemory, index)
+    if localVersion >= remoteVersion {
+        //远程版本太低 放弃
         return
     }
 
-    RemoveService(cc.indexHub, serviceKey)
-    cc.indexLock.Release()
+    //执行删除，先删除索引
+    cc.indexLock.Lock()
+    delete(cc.indexMap, serviceKey)
+    cc.indexLock.Unlock()
 
+    //在内存中删除
     cc.confLocks[index].WRLock()
-    RemoveServiceConf(cc.confHub, uint(index))
-    cc.confLocks[index].Release()
+    defer cc.confLocks[index].Release()
+    RemoveServiceConf(cc.confMemory, index)
 }
 
 //强制删除某service的配置 无视版本（清理G触发）
 func (cc *ConfigController) ForceRemoveService(serviceKey string) {
     //先获取索引位置
-    cc.indexLock.WRLock()
-    index, _ := GetServiceIndex(cc.indexHub, serviceKey)
-    if index == -1 {
-        //不存在 放弃
-        cc.indexLock.Release()
+    cc.indexLock.Lock()
+    index, ok := cc.indexMap[serviceKey]
+    cc.indexLock.Unlock()
+    if !ok {
+        //不存在
         return
     }
-    RemoveService(cc.indexHub, serviceKey)
-    cc.indexLock.Release()
+    //执行删除，先删除索引
+    cc.indexLock.Lock()
+    delete(cc.indexMap, serviceKey)
+    cc.indexLock.Unlock()
+
+    //在内存中删除
     cc.confLocks[index].WRLock()
     defer cc.confLocks[index].Release()
-    RemoveServiceConf(cc.confHub, uint(index))
+    RemoveServiceConf(cc.confMemory, index)
 }
 
 //更新一个service的配置，来自于pull的回复 前提：配置数据不为空
 func (cc *ConfigController) UpdateService(serviceKey string, remoteVersion uint, configKeys []string, values []string) error {
-    cc.indexLock.RDLock()
-    index, localVersion := GetServiceIndex(cc.indexHub, serviceKey)
-    cc.indexLock.Release()
-    if index == -1 {
+    cc.indexLock.RLock()
+    index, ok := cc.indexMap[serviceKey]
+    cc.indexLock.RUnlock()
+    if !ok {
         //说明本地不存在此serviceKey，那么添加
         return cc.addNewService(serviceKey, remoteVersion, configKeys, values)
     }
-    if remoteVersion <= localVersion {
-        return errors.New(fmt.Sprintf("remote service %s configure is too old", serviceKey))
+    //获取版本
+    _, localVersion := GetServiceKey(cc.confMemory, index)
+    if localVersion >= remoteVersion {
+        //远程版本不是新的 放弃
+        return errors.New(fmt.Sprintf("remote service %s configure is old", serviceKey))
     }
-    //更新版本
-    cc.indexLock.WRLock()
-    UpdServiceVersion(cc.indexHub, serviceKey, remoteVersion)
-    cc.indexLock.Release()
     //先排序
     sortedKeys, sortedValues := common.SortKV(configKeys, values)
+
+    //更新
     cc.confLocks[index].WRLock()
     defer cc.confLocks[index].Release()
     //重置新的serviceConf
-    AddServiceConf(cc.confHub, uint(index), sortedKeys, sortedValues)
+    AddServiceConf(cc.confMemory, uint(index), serviceKey, remoteVersion, sortedKeys, sortedValues)
     return nil
 }
-/*
-//读配置
-func (cc *ConfigController) Get(serviceKey string, confKey string) string {
-    cc.indexLock.RDLock()
-    index, _ := GetServiceIndex(cc.indexHub, serviceKey)
-    cc.indexLock.Release()
-    if index == -1 {
-        //不存在
-        return ""
-    }
-    //上读锁
-    cc.confLocks[index].RDLock()
-    defer cc.confLocks[index].Release()
-    return GetConf(cc.confHub, uint(index), confKey)
-}*/
 
-//配置获取
+//查询某serviceKey的索引
+func (cc *ConfigController) QueryIndex(serviceKey string) (uint, error) {
+    cc.indexLock.RLock()
+    defer cc.indexLock.RUnlock()
+    index, ok := cc.indexMap[serviceKey]
+    if !ok {
+        return ServiceBucketLimit, errors.New("service is not exist")
+    }
+    return index, nil
+}
+
+//配置获取,代表一个serviceKey
 type ConfigGetter struct {
-    indexShm *SharedMem
-    confShm *SharedMem
-    indexHub *[TotalIndexMemSize]byte
-    indexLock *RdFlock
-    confHub *[TotalConfMemSize]byte
-    confLocks [ServiceBucketLimit]*RdFlock//管理services
+    sharedMemory *SharedMem
+    confMemory *[TotalConfMemSize]byte
+    index uint
+    serviceKey string
+    confLock *RdFlock//控制访问services
 }
 
 //创建一个配置获取
-func GetConfigGetter() (*ConfigGetter, error) {
-    configGetter := ConfigGetter {}
-    //获取文件锁
-    for i := uint(0);i < ServiceBucketLimit; i++ {
-        flockPath := fmt.Sprintf("%s/cfg_%d.lock", RootPath, i)
-        fl, err := getRdFlock(flockPath)
-        if err != nil {
-            //关闭所有已打开文件锁
-            for j := uint(0);j < i; j++ {
-                configGetter.confLocks[j].Close()
-            }
-            return nil, err
-        }
-        configGetter.confLocks[i] = fl
+func GetConfigGetter(serviceKey string, index uint) (*ConfigGetter, error) {
+    configGetter := ConfigGetter{
+        serviceKey:serviceKey,
+        index:index,
     }
-    //获取index文件锁
-    flockPath := fmt.Sprintf("%s/idx.lock", RootPath)
-    iFlk, err := getRdFlock(flockPath)
-    if err != nil {
-        //关闭所有已打开文件锁
-        for i := uint(0);i < ServiceBucketLimit; i++ {
-            configGetter.confLocks[i].Close()
-        }
-        return nil, err
-    }
-    configGetter.indexLock = iFlk
 
-    //获取index共享内存
-    mapPath := fmt.Sprintf("%s/idx.mmap", RootPath)
-    m, err := attachSharedMem(mapPath, int(TotalConfMemSize))
+    //获取conf文件锁
+    flockPath := fmt.Sprintf("%s/cfg_%d.lock", RootPath, index)
+    flock, err := getRdFlock(flockPath)
     if err != nil {
-        //关闭所有文件锁
-        for i := uint(0);i < ServiceBucketLimit; i++ {
-            configGetter.confLocks[i].Close()
-        }
-        configGetter.indexLock.Close()
         return nil, err
     }
-    configGetter.indexShm = m
-    //读取共享内存，转化为数组
-    configGetter.indexHub = (*[TotalIndexMemSize]byte)(
-        unsafe.Pointer(&configGetter.indexShm.bs[0]))
+    configGetter.confLock = flock
 
     //获取conf共享内存
-    mapPath = fmt.Sprintf("%s/cfg.mmap", RootPath)
-    m, err = attachSharedMem(mapPath, int(TotalConfMemSize))
+    mapPath := fmt.Sprintf("%s/cfg.mmap", RootPath)
+    m, err := attachSharedMem(mapPath, int(TotalConfMemSize))
     if err != nil {
-        //关闭所有文件锁
-        for i := uint(0);i < ServiceBucketLimit; i++ {
-            configGetter.confLocks[i].Close()
-        }
-        configGetter.indexLock.Close()
         return nil, err
     }
-    configGetter.confShm = m
+    configGetter.sharedMemory = m
     //读取共享内存，转化为数组
-    configGetter.confHub = (*[TotalConfMemSize]byte)(
-        unsafe.Pointer(&configGetter.confShm.bs[0]))
+    configGetter.confMemory = (*[TotalConfMemSize]byte)(
+        unsafe.Pointer(&configGetter.sharedMemory.bs[0]))
     //已创建成功
     return &configGetter, nil
 }
@@ -318,26 +285,15 @@ func GetConfigGetter() (*ConfigGetter, error) {
 //清理
 func (cg *ConfigGetter) Close() {
     //关闭共享内存
-    cg.indexShm.Close()
-    cg.confShm.Close()
-    //关闭所有文件锁
-    for i := uint(0);i < ServiceBucketLimit; i++ {
-        cg.confLocks[i].Close()
-    }
-    cg.indexLock.Close()
+    cg.sharedMemory.Close()
+    //关闭文件锁
+    cg.confLock.Release()
 }
 
 //读配置
-func (cg *ConfigGetter) Get(serviceKey string, confKey string) string {
-    cg.indexLock.RDLock()
-    index, _ := GetServiceIndex(cg.indexHub, serviceKey)
-    cg.indexLock.Release()
-    if index == -1 {
-        //不存在
-        return ""
-    }
+func (cg *ConfigGetter) Get(confKey string) string {
     //上读锁
-    cg.confLocks[index].RDLock()
-    defer cg.confLocks[index].Release()
-    return GetConf(cg.confHub, uint(index), confKey)
+    cg.confLock.RDLock()
+    defer cg.confLock.Release()
+    return GetConf(cg.confMemory, cg.serviceKey, uint(cg.index), confKey)
 }

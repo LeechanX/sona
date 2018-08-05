@@ -1,8 +1,6 @@
 package core
 
-import (
-    "encoding/binary"
-)
+import "encoding/binary"
 
 const (
     //“产品线名.业务组名.服务名”组成serviceKey用于标识一个服务，各字段限长30字节
@@ -12,229 +10,112 @@ const (
     //value支持最大200字节
     ConfValueCap = uint(200)
     ServiceConfLimit = uint(100)
-
     //一个bucket用于存放一个Service的配置，可存多少种Service
-    //[配置个数:配置k1长度:配置k1:配置v1长度:配置v1:......]
-    //[2:[2:61:2:30]:[]:...]
-    OneBucketCap = 2 + ServiceConfLimit * (2 + ConfKeyCap + 2 + ConfValueCap)
-
+    //[版本号:serviceKey长度:serviceKey:配置个数:配置k1长度:配置k1:配置v1长度:配置v1:......]
+    //[2:2:92:2:[2:61:2:30]:[2:61:2:30]:...]
+    OneBucketCap = 2 + 2 + ServiceKeyCap + 2 + ServiceConfLimit * (2 + ConfKeyCap + 2 + ConfValueCap)
     //一个service总共可包含100个配置
     ServiceBucketLimit = uint(100)
-
     //配置总内存空间
     //[Service1][Service2][Service3]...最多100个
     TotalConfMemSize = OneBucketCap * ServiceBucketLimit
-
-    //一个index信息
-    //[serviceKey长度:serviceKey:版本号:位置]
-    OneIndexCap = 2 + ServiceKeyCap + 2 + 2
-    //索引总内存空间
-    //前两个字节用于保存当前service个数
-    TotalIndexMemSize = 2 + OneIndexCap * ServiceBucketLimit
 )
 
-//indexHub: [TotalMetaMemSize]byte
-
-//获取当前service个数
-func getServiceCount(indexHub *[TotalIndexMemSize]byte) uint {
-    serviceCnt := binary.LittleEndian.Uint16(indexHub[:2])
-    return uint(serviceCnt)
+//在指定切片（2字节）上获取数字值
+func getNumber(slice []byte) uint {
+    number := binary.LittleEndian.Uint16(slice)
+    return uint(number)
 }
 
-//获取对应位置的配置内容
-func getServiceData(indexHub *[TotalIndexMemSize]byte, pos uint) (string, uint, uint) {
-    start := 2 + OneIndexCap * pos
-    keyLen := uint(binary.LittleEndian.Uint16(indexHub[start:start + 2]))
-    serviceKey := string(indexHub[start + 2:start + 2 + keyLen])
-    version := binary.LittleEndian.Uint16(indexHub[start + 2 + ServiceKeyCap:
-        start + 2 + ServiceKeyCap + 2])
-    index := binary.LittleEndian.Uint16(indexHub[start + 4 + ServiceKeyCap:
-        start + 6 + ServiceKeyCap])
-    return serviceKey, uint(version), uint(index)
+//在指定切片（2字节）上写入数字值
+func setNumber(slice []byte, v uint16) {
+    binary.LittleEndian.PutUint16(slice, v)
 }
 
-//在indexHub上找到第一个 字典序>=serviceKey的service位置
-//返回：位置，是否存在
-func searchFirstNoLess(indexHub *[TotalIndexMemSize]byte, targetKey string) (uint, bool) {
-    size := getServiceCount(indexHub)
-    low, high := uint(0), size
-    for low < high {
-        mid := (low + high) / 2
-        key, _, _ := getServiceData(indexHub, uint(mid))
-        if key < targetKey {
-            low = mid + 1
-        } else if key > targetKey {
-            if mid == 0 {
-                return 0, false
-            }
-            prevKey, _, _ := getServiceData(indexHub, uint(mid - 1))
-            if prevKey < targetKey {
-                return mid, false
-            } else {
-                high = mid
-            }
-        } else {
-            //找到了
-            return mid, true
+//获取目前内存中所有service配置所在索引位置
+func GetAllServiceIndex(memory *[TotalConfMemSize]byte) map[string]uint {
+    start := uint(0)
+    serviceIndex := make(map[string]uint)
+    var index uint = 0
+    for start < TotalConfMemSize {
+        if getNumber(memory[start:start + 2]) > 0 {
+            //说明有配置
+            //获取serviceKey长度
+            serviceKeyLen := getNumber(memory[start + 2:start + 4])
+            //获取serviceKey
+            serviceKey := string(memory[start + 4:start + 4 + serviceKeyLen])
+            //fmt.Printf("get %s\n", serviceKey)
+            serviceIndex[serviceKey] = index
         }
+        start += OneBucketCap
+        index += 1
     }
-    return size, false
+    return serviceIndex
 }
 
-//设置pos位置处的service信息
-func setService(indexHub *[TotalIndexMemSize]byte, serviceKey string, version uint, index uint, pos uint) {
-    //[serviceKey长度:serviceKey:版本号:位置]
-    //2 + ServiceKeyCap + 2 + 2
-    start := 2 + OneIndexCap * uint(pos)
-    //设置serviceKey长度
-    binary.LittleEndian.PutUint16(indexHub[start:start + 2], uint16(len(serviceKey)))
-    //设置serviceKey
-    copy(indexHub[start + 2:start + 2 + ServiceKeyCap], serviceKey)
-    //设置版本号
-    binary.LittleEndian.PutUint16(indexHub[start + 2 + ServiceKeyCap:start + 4 + ServiceKeyCap], uint16(version))
-    //设置位置
-    binary.LittleEndian.PutUint16(indexHub[start + 4 + ServiceKeyCap:start + 6 + ServiceKeyCap], uint16(index))
-}
-
-//查找某service的信息，返回索引信息、版本
-//-1表示不存在
-func GetServiceIndex(indexHub *[TotalIndexMemSize]byte, serviceKey string) (int, uint) {
-    pos, exist := searchFirstNoLess(indexHub, serviceKey)
-    if !exist {
-        return -1, 0
-    }
-    start := 2 + OneIndexCap * uint(pos) + 2 + ServiceKeyCap
-    version := uint(binary.LittleEndian.Uint16(indexHub[start:start + 2]))
-    index := int(binary.LittleEndian.Uint16(indexHub[start + 2:start + 2 + 2]))
-    return index, version
-}
-
-//插入新service
-func InsertService(indexHub *[TotalIndexMemSize]byte, serviceKey string, version uint, index uint) bool {
-    count := getServiceCount(indexHub)
-    pos, exist := searchFirstNoLess(indexHub, serviceKey)
-    if exist {
-        //已存在，改个版本号就行了
-        start := 2 + OneIndexCap * uint(pos) + 2 + ServiceKeyCap
-        binary.LittleEndian.PutUint16(indexHub[start:start + 2], uint16(version))
-        return true
-    }
-    if count == ServiceBucketLimit {
-        //已经满了
-        return false
-    }
-    if pos == count {
-        //添加到indexHub尾端
-        setService(indexHub, serviceKey, version, index, count)
-    } else {
-        start := 2 + OneIndexCap * uint(pos)
-        //pos位置处整体后移
-        copy(indexHub[start + OneIndexCap:start + OneIndexCap * (count + 1 - pos)],
-            indexHub[start:start + OneIndexCap * (count - pos)])
-        //添加到pos位置
-        setService(indexHub, serviceKey, version, index, pos)
-    }
-    //service Count加1
-    binary.LittleEndian.PutUint16(indexHub[:2], uint16(count + 1))
-    return true
-}
-
-//删除service
-func RemoveService(indexHub *[TotalIndexMemSize]byte, serviceKey string) {
-    pos, exist := searchFirstNoLess(indexHub, serviceKey)
-    if !exist {
-        return
-    }
-    count := getServiceCount(indexHub)
-    if pos != count - 1 {
-        start := 2 + OneIndexCap * pos
-        //不是最后一个，后面的整体向前移动
-        behind := count - 1 - pos
-        copy(indexHub[start:start + OneIndexCap * behind],
-            indexHub[start + OneIndexCap:start + OneIndexCap + OneIndexCap * behind])
-    }
-    //service Count减1
-    binary.LittleEndian.PutUint16(indexHub[:2], uint16(count - 1))
-}
-
-//更新某service版本
-func UpdServiceVersion(indexHub *[TotalIndexMemSize]byte, serviceKey string, version uint) {
-    pos, exist := searchFirstNoLess(indexHub, serviceKey)
-    if exist {
-        start := 2 + OneIndexCap * uint(pos) + 2 + ServiceKeyCap
-        binary.LittleEndian.PutUint16(indexHub[start:start + 2], uint16(version))
-    }
-}
-
-//获取所有service和对应版本
-func GetAllService(indexHub *[TotalIndexMemSize]byte) map[string]uint {
-    count := getServiceCount(indexHub)
-    services := make(map[string]uint)
-    for i := uint(0);i < count;i++ {
-        serviceKey, version, _ := getServiceData(indexHub, i)
-        services[serviceKey] = version
-    }
-    return services
-}
-
-//获取第一个可用index
-func GetFirstIndexFree(indexHub *[TotalIndexMemSize]byte) uint {
-    count := getServiceCount(indexHub)
-    idxSet := make(map[uint]bool)
-    for i := uint(0);i < count;i++ {
-        _, _, idx := getServiceData(indexHub, i)
-        idxSet[idx] = true
-    }
-    for idx := uint(0);idx < ServiceBucketLimit;idx++ {
-        if _, ok := idxSet[idx];!ok {
-            return idx
-        }
-    }
-    return ServiceBucketLimit
-}
-
-//一个bucket用于存放一个Service的配置，可存多少种Service
-//[配置个数:配置k1长度:配置k1:配置v1长度:配置v1:......]
-//[2:[1:61:1:30]:[]:...]
-//OneBucketCap = + 2 + ServiceConfLimit * (1 + ConfKeyCap + 1 + ConfValueCap)
-//confHub: [TotalConfMemSize]byte
-
-//获取某service配置个数
-func GetConfCount(confHub *[TotalConfMemSize]byte, idx uint) uint {
-    start := idx * OneBucketCap
-    confCnt := uint(binary.LittleEndian.Uint16(confHub[start:start + 2]))
-    return confCnt
-}
-
-//获取某service的某位置pos上的配置
-func getOneConf(confHub *[TotalConfMemSize]byte, idx uint, pos uint) (string, string) {
-    start := idx * OneBucketCap + 2 + pos * (2 + ConfKeyCap + 2 + ConfValueCap)
-    keyLen := uint(binary.LittleEndian.Uint16(confHub[start:start + 2]))
-    confKey := string(confHub[start + 2:start + 2 + keyLen])
-    valueLen := uint(binary.LittleEndian.Uint16(confHub[start + 2 + ConfKeyCap:start + 2 + ConfKeyCap + 2]))
-    confValue := string(confHub[start + 2 + ConfKeyCap + 2:start + 2 + ConfKeyCap + 2 + valueLen])
-    return confKey, confValue
+//接下来是某service具体信息的操作
+//获取某service里的配置个数
+func GetConfCount(memory *[TotalConfMemSize]byte, idx uint) uint {
+    start := idx * OneBucketCap + 4 + ServiceKeyCap
+    return getNumber(memory[start:start + 2])
 }
 
 //为某service在pos位置处设置配置
-func setOneConf(confHub *[TotalConfMemSize]byte, idx uint, pos uint, confKey string, value string) {
-    var start = idx * OneBucketCap + 2 + pos * (2 + ConfKeyCap + 2 + ConfValueCap)
-    binary.LittleEndian.PutUint16(confHub[start:start + 2], uint16(len(confKey)))
+func setOneConf(memory *[TotalConfMemSize]byte, idx uint, pos uint, confKey string, value string) {
+    var start = idx * OneBucketCap + 2 + 2 + ServiceKeyCap + 2 + pos * (2 + ConfKeyCap + 2 + ConfValueCap)
+    setNumber(memory[start:start + 2], uint16(len(confKey)))
     start += 2
-    copy(confHub[start:start + ConfKeyCap], confKey)
+    copy(memory[start:start + ConfKeyCap], confKey)
     start += ConfKeyCap
-    binary.LittleEndian.PutUint16(confHub[start:start + 2], uint16(len(value)))
+    setNumber(memory[start:start + 2], uint16(len(value)))
     start += 2
-    copy(confHub[start:start + ConfValueCap], value)
+    copy(memory[start:start + ConfValueCap], value)
 }
 
-//获取某service的一个配置值
-func GetConf(confHub *[TotalConfMemSize]byte, idx uint, confKey string) string {
-    pos, exist := searchOneConf(confHub, idx, confKey)
+//获取某service的某位置pos上的配置
+func getOneConf(memory *[TotalConfMemSize]byte, idx uint, pos uint) (string, string) {
+    start := idx * OneBucketCap + 2 + 2 + ServiceKeyCap + 2 + pos * (2 + ConfKeyCap + 2 + ConfValueCap)
+    keyLen := getNumber(memory[start:start + 2])
+    confKey := string(memory[start + 2:start + 2 + keyLen])
+    valueLen := getNumber(memory[start + 2 + ConfKeyCap:start + 2 + ConfKeyCap + 2])
+    confValue := string(memory[start + 2 + ConfKeyCap + 2:start + 2 + ConfKeyCap + 2 + valueLen])
+    return confKey, confValue
+}
+
+//某位置是否有配置
+func HasService(memory *[TotalConfMemSize]byte, idx uint) bool {
+    start := idx * OneBucketCap
+    return getNumber(memory[start:start + 2]) != 0
+}
+
+//获取某位置上的serviceKey与版本
+func GetServiceKey(memory *[TotalConfMemSize]byte, idx uint) (string, uint) {
+    if !HasService(memory, idx) {
+        return "", 0
+    }
+    start := idx * OneBucketCap
+    version := getNumber(memory[start:start + 2])
+    serviceKeyLen := getNumber(memory[start + 2:start + 4])
+    //获取serviceKey
+    serviceKey := string(memory[start + 4:start + 4 + serviceKeyLen])
+    return serviceKey, version
+}
+
+//获取某service的某配置confKey的值
+func GetConf(memory *[TotalConfMemSize]byte, serviceKey string, idx uint, confKey string) string {
+    if !HasService(memory, idx) {
+        return ""
+    }
+    //检查：idx位置处是否是要求的serviceKey
+    serviceKeyInMem, _ := GetServiceKey(memory, idx)
+    if serviceKeyInMem != serviceKey {
+        return ""
+    }
+    pos, exist := searchOneConf(memory, idx, confKey)
     if !exist {
         return ""
     }
-    key, value := getOneConf(confHub, idx, pos)
+    key, value := getOneConf(memory, idx, pos)
     if key != confKey {
         return ""
     }
@@ -243,19 +124,19 @@ func GetConf(confHub *[TotalConfMemSize]byte, idx uint, confKey string) string {
 
 //在某service下的配置中，找到第一个 字典序>=confKey的成员
 //返回位置
-func searchOneConf(confHub *[TotalConfMemSize]byte, idx uint, confKey string) (uint, bool) {
-    confCnt := GetConfCount(confHub, idx)
+func searchOneConf(memory *[TotalConfMemSize]byte, idx uint, confKey string) (uint, bool) {
+    confCnt := GetConfCount(memory, idx)
     low, high := uint(0), confCnt
     for low < high {
         mid := (low + high) / 2
-        key, _ := getOneConf(confHub, idx, mid)
+        key, _ := getOneConf(memory, idx, mid)
         if key < confKey {
             low = mid + 1
         } else if key > confKey {
             if mid == 0 {
                 return 0, false
             }
-            prevKey, _ := getOneConf(confHub, idx, mid - 1)
+            prevKey, _ := getOneConf(memory, idx, mid - 1)
             if prevKey >= confKey {
                 high = mid
             } else {
@@ -269,19 +150,25 @@ func searchOneConf(confHub *[TotalConfMemSize]byte, idx uint, confKey string) (u
 }
 
 //添加一个service的配置，前提：confKey已按照字典序排序
-func AddServiceConf(confHub *[TotalConfMemSize]byte, idx uint, confKeys []string, values []string) {
+func AddServiceConf(memory *[TotalConfMemSize]byte, idx uint,
+    serviceKey string, version uint, confKeys []string, values []string) {
     var start = idx * OneBucketCap
     confCnt := uint(len(confKeys))
-    //设置长度
-    binary.LittleEndian.PutUint16(confHub[start:start + 2], uint16(confCnt))
-    start += 2
+    serviceKeyLen := len(serviceKey)
+
+    setNumber(memory[start:start + 2], uint16(version))
+    setNumber(memory[start + 2:start + 4], uint16(serviceKeyLen))
+    copy(memory[start + 4:start + 4 + ServiceKeyCap], serviceKey)
+    setNumber(memory[start + 4 + ServiceKeyCap:start + 6 + ServiceKeyCap], uint16(confCnt))
+
     for i := uint(0);i < confCnt;i++ {
-        setOneConf(confHub, idx, i, confKeys[i], values[i])
+        setOneConf(memory, idx, i, confKeys[i], values[i])
     }
 }
 
 //删除某service的配置
-func RemoveServiceConf(confHub *[TotalConfMemSize]byte, idx uint) {
+func RemoveServiceConf(memory *[TotalConfMemSize]byte, idx uint) {
     start := idx * OneBucketCap
-    binary.LittleEndian.PutUint16(confHub[start:start + 2], 0)
+    //将版本号设置为0，表示此处没有配置了
+    setNumber(memory[start:start + 2], 0)
 }
