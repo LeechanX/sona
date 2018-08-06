@@ -1,16 +1,19 @@
 #!/bin/bash
 
+ps -fe |grep keepalived |grep -v grep
+if [ $? -eq 0 ]; then
+    echo "do nothing"
+    exit
+fi
+
 ps -fe |grep sona_broker |grep -v grep
 if [ $? -ne 0 ]; then
-    echo "sona broker is not running"
-    exit 1
-else
-    echo "sona broker is running, ping it now"
+    exit
 fi
 
 DETECT=`/etc/keepalived/broker_detect 127.0.0.1 9902`
 if [ $? -ne 0 ]; then
-    exit 1
-else
-    exit 0
+    exit
 fi
+
+/etc/init.d/keepalived start

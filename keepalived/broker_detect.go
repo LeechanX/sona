@@ -14,13 +14,13 @@ import (
 func main() {
     if len(os.Args) != 3 {
         fmt.Println("usage: ./broker_detect broker_ip broker_port")
-        os.Exit(0)//ignore
+        os.Exit(1)//ignore
     }
     brokerIp := os.Args[1]
     brokerPort, err := strconv.Atoi(os.Args[2])
     if err != nil {
         fmt.Println("usage: ./broker_detect broker_ip broker_port")
-        os.Exit(0)//ignore
+        os.Exit(1)//ignore
     }
     detect, err := client.CreateSyncClient(brokerIp, brokerPort)
     if err != nil {
