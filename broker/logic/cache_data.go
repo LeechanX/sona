@@ -75,7 +75,7 @@ func (cd *CacheLayerStructure) WriteBack(serviceKey string, newVersion uint, con
     }
 }
 
-//清理过期缓存 (过期时间：delay，秒)
+//更新过期缓存 (过期时间：delay，秒)
 func (cd *CacheLayerStructure) ClearExpired(delay int64) {
     for {
         time.Sleep(time.Second)
