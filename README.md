@@ -61,3 +61,4 @@ if err == nil {
 - 编辑broker配置文件（示例在`broker/conf/`目录下），后执行`bin/sona_broker -c 配置文件路径`启动broker
 - 编辑agent配置文件（示例在`agent/conf/`目录下），后执行`bin/sona_agent -c 配置文件路径`启动agent
 - 所有语言的api位于`api`目录下，自行使用即可
+
