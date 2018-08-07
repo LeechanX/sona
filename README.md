@@ -41,9 +41,27 @@ if err == nil {
 }
 ```
 
-## 架构
+## 原理介绍
 
 ![arch](tutorial/pictures/arch.jpg)
+
+- `broker`做数据中心管控，管理配置数据的增、改、订阅、下发，使用keepalived做高可用
+- `agent`做各节点配置代理，管理下发到各个节点的配置、业务订阅配置等
+- 共享内存是`sona`核心结构，`agent`实际在这里管理配置，业务实际也从这里读取最新配置
+
+### 目录
+
+1: **数据表示 [data readme][1]**
+
+[1]: https://github.com/LeechanX/Sona/blob/master/tutorial/data.md
+
+2: **共享内存模型与agent、api [mem readme][2]**
+
+[2]: https://github.com/LeechanX/Sona/blob/master/tutorial/broker.md
+
+3: **broker介绍 [broker readme][3]**
+
+[3]: https://github.com/LeechanX/Sona/blob/master/tutorial/broker.md
 
 ## 安装
 
