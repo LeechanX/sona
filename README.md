@@ -26,7 +26,7 @@ sona配置中心采用了经典一中心(broker)多agent的分布式架构，基
 
 提供C/C++/Java/Python/Golang多语言支持
 
-go语言业务：
+go语言：
 
 ```
 import "sona/api"
@@ -40,6 +40,18 @@ if err == nil {
     list := configApi.GetList("lebron-james","friends") //获取lebron-james.friends值列表 ([]string)
 }
 ```
+C++：
+
+```
+#include "sona_api.h"
+
+sona_api* api = init_api("nba.player.info"); //获取nba.player.info服务的配置
+if api != NULL {
+    string value = api->get("lebron-james", "number");
+    vector<string> list = api->get_list("lebron-james","friends"); //获取lebron-james.friends值列表 (vector<string>)
+}
+```
+
 
 ## 原理介绍
 
