@@ -10,11 +10,11 @@ int main() {
         return 0;
     }
     for (int i = 0;i < 100; ++i) {
-        std::string x = api->api_get("log", "level");
+        std::string x = api->get("log", "level");
         std::cout << "log.level " << x << std::endl;
-        x = api->api_get("pushstatus", "ip");
+        x = api->get("pushstatus", "ip");
         std::cout << "pushstatus ip " << x << std::endl;
-        x = api->api_get("pushstatus", "port");
+        x = api->get("pushstatus", "port");
         std::cout << "pushstatus port " << x << std::endl;
         sleep(1);
     }

@@ -6,8 +6,39 @@
 #include <fcntl.h>
 #include <string.h>
 #include <pthread.h>
+#include <sstream>
 #include <algorithm>
 #include "network.h"
+
+static std::string trim(const std::string& str) {
+    std::string::size_type pos = str.find_first_not_of(' ');
+    if (pos == std::string::npos)
+    {
+        return "";
+    }
+    std::string::size_type pos2 = str.find_last_not_of(' ');
+    if (pos2 != std::string::npos)
+    {
+        return str.substr(pos, pos2 - pos + 1);
+    }
+    return str.substr(pos);
+}
+
+static std::vector<std::string> split_by_comma(const std::string& str) {
+    std::stringstream ss(str);
+    std::vector<std::string> result;
+
+    while(ss.good())
+    {
+        std::string substr;
+        std::getline(ss, substr, ',');
+        substr = trim(substr);
+        if (substr != "") {
+            result.push_back(substr);
+        }
+    }
+    return result;
+}
 
 //keep using
 void* keep_using(void* args) {
@@ -34,10 +65,8 @@ sona_api::~sona_api() {
 }
 
 //get value
-const std::string sona_api::api_get(std::string section, std::string key) {
-    std::remove(section.begin(), section.end(), ' ');
-    std::remove(key.begin(), key.end(), ' ');
-    std::string conf_key = section + "." + key;
+const std::string sona_api::get(std::string section, std::string key) {
+    std::string conf_key = trim(section) + "." + trim(key);
     if (conf_key.size() > ConfKeyCap) {
         fprintf(stderr, "format error: configure key %s is too long\n", conf_key.c_str());
         return "";
@@ -57,6 +86,11 @@ const std::string sona_api::api_get(std::string section, std::string key) {
     fcntl(ffd, F_SETLK, &lock);
     const std::string value(c_value);
     return value;
+}
+
+//get list
+std::vector<std::string> sona_api::get_list(std::string section, std::string key) {
+    return split_by_comma(get(section, key));
 }
 
 //must invoke init function before use api
