@@ -26,5 +26,5 @@ func main() {
     //主G负责周期性拉最新数据
 
     expiredTs := int64(conf.GlobalConf.CacheExpiredTime)
-    logic.CacheLayer.ClearExpired(expiredTs)
+    logic.CacheLayer.UpdateExpiredItem(expiredTs)
 }

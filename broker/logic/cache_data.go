@@ -2,9 +2,9 @@ package logic
 
 import (
     "sync"
-    "sona/broker/dao"
     "log"
     "time"
+    "sona/broker/dao"
     "gopkg.in/mgo.v2"
 )
 
@@ -76,7 +76,7 @@ func (cd *CacheLayerStructure) WriteBack(serviceKey string, newVersion uint, con
 }
 
 //更新过期缓存 (过期时间：delay，秒)
-func (cd *CacheLayerStructure) ClearExpired(delay int64) {
+func (cd *CacheLayerStructure) UpdateExpiredItem(delay int64) {
     for {
         time.Sleep(time.Second)
         currentTs := time.Now().Unix()
@@ -84,22 +84,21 @@ func (cd *CacheLayerStructure) ClearExpired(delay int64) {
         expired := make([]string, 0)
         cd.rwMutex.RLock()
         for serviceKey, unit := range cd.data {
-            if currentTs-unit.loadTime >= delay {
+            if currentTs - unit.loadTime >= delay {
                 expired = append(expired, serviceKey)
             }
         }
 
         cd.rwMutex.RUnlock()
-        //对每个可能过期key，二次检查时间并尝试删除
-        cd.rwMutex.Lock()
+
+        //对每个可能过期key，重拉配置并尝试更新
         for _, serviceKey := range expired {
-            if unit, ok := cd.data[serviceKey]; ok {
-                if currentTs-unit.loadTime >= delay {
-                    //执行删除
-                    delete(cd.data, serviceKey)
-                }
+            version, confKeys, confValues, err := dao.GetDocument(serviceKey)
+            if err != nil {
+                log.Printf("get data from mongo db meet error: %s\n", err)
+                continue
             }
+            cd.WriteBack(serviceKey, version, confKeys, confValues)
         }
-        cd.rwMutex.Unlock()
     }
 }
