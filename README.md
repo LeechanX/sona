@@ -55,7 +55,7 @@ if err == nil {
 
 **共享内存模型与agent、api [mem readme][2]**
 
-[2]: https://github.com/LeechanX/Sona/blob/master/tutorial/broker.md
+[2]: https://github.com/LeechanX/Sona/blob/master/tutorial/mem.md
 
 **broker介绍 [broker readme][3]**
 
