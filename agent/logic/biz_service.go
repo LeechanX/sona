@@ -34,7 +34,7 @@ func SubscribeReqHandler(server *udp.Server, addr *net.UDPAddr, pb proto.Message
     log.Printf("received subscribe request for service %s\n", *req.ServiceKey)
 
     index, err := ConfController.QueryIndex(*req.ServiceKey)
-    if err != nil {
+    if err == nil {
         //本地已经有了，则回复索引
         rsp := &protocol.SubscribeAgentRsp{}
         rsp.Code = proto.Int32(0)
