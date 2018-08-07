@@ -49,15 +49,15 @@ if err == nil {
 - `agent`做各节点配置代理，管理下发到各个节点的配置、业务订阅配置等
 - 共享内存是`sona`核心结构，`agent`实际在这里管理配置，业务实际也从这里读取最新配置
 
-**数据介绍 [data readme][1]**
+数据介绍 [data readme][1]
 
 [1]: https://github.com/LeechanX/Sona/blob/master/tutorial/data.md
 
-**共享内存模型与agent、api [mem readme][2]**
+共享内存模型与agent、api [mem readme][2]
 
 [2]: https://github.com/LeechanX/Sona/blob/master/tutorial/mem.md
 
-**broker介绍 [broker readme][3]**
+broker介绍 [broker readme][3]
 
 [3]: https://github.com/LeechanX/Sona/blob/master/tutorial/broker.md
 
