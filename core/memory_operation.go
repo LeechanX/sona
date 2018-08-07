@@ -23,13 +23,13 @@ const (
 
 //在指定切片（2字节）上获取数字值
 func getNumber(slice []byte) uint {
-    number := binary.LittleEndian.Uint16(slice)
+    number := binary.BigEndian.Uint16(slice)
     return uint(number)
 }
 
 //在指定切片（2字节）上写入数字值
 func setNumber(slice []byte, v uint16) {
-    binary.LittleEndian.PutUint16(slice, v)
+    binary.BigEndian.PutUint16(slice, v)
 }
 
 //获取目前内存中所有service配置所在索引位置
