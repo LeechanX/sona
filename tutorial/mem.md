@@ -12,7 +12,7 @@
 
 如图：
 
-![mem](tutorial/pictures/mem.jpg)
+![mem](tutorial/pictures/mem.png)
 
 于是
 
