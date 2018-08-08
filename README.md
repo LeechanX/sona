@@ -76,7 +76,7 @@ if (api != null) {
 from sona import api
 
 try:
-    api = api.SonaApi("lebron.xx.info")
+    api = api.SonaApi("lebron.james.info")
 except Exception as e:
     api = None
     print(e)
