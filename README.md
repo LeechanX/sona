@@ -47,7 +47,7 @@ if err == nil {
 
 sona_api* api = init_api("nba.player.info"); //获取nba.player.info服务的配置
 if api != NULL {
-    string value = api->get("lebron-james", "number");
+    string value = api->get("lebron-james", "number"); //获取lebron-james.number值 (string)
     vector<string> list = api->get_list("lebron-james","friends"); //获取lebron-james.friends值列表 (vector<string>)
 }
 ```
@@ -55,14 +55,14 @@ if api != NULL {
 ```
 SonaApi api = null;
 try {
-    api = new SonaApi("lebron.james.info");
+    api = new SonaApi("lebron.james.info"); //获取lebron.james.info服务的配置
 } catch (Exception e) {
 }
 
 if (api != null) {
-    String value = api.Get("player", "number");
+    String value = api.Get("player", "number"); //获取player.number值 (string)
     System.out.println(value);
-    ArrayList<String> list = api.GetList("friends", "list");
+    ArrayList<String> list = api.GetList("friends", "list"); //获取friends.list值列表 (ArrayList<string>)
     for (String item: list) {
         System.out.println(item);
     }
