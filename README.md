@@ -40,7 +40,7 @@ if err == nil {
     list := configApi.GetList("lebron-james","friends") //获取lebron-james.friends值列表 ([]string)
 }
 ```
-**C++：**
+**C++：** 见目录api/cpp
 
 ```
 #include "sona_api.h"
@@ -51,8 +51,10 @@ if api != NULL {
     vector<string> list = api->get_list("lebron-james","friends"); //获取lebron-james.friends值列表 (vector<string>)
 }
 ```
-**Java：**
+**Java：** jar包在api/java/sona_api/lib/sona_api.jar，源码见api/java/sona_api/src
 ```
+import org.sona.api.SonaApi;
+
 SonaApi api = null;
 try {
     api = new SonaApi("lebron.james.info"); //获取lebron.james.info服务的配置
