@@ -22,7 +22,7 @@ func PullWhenStart() {
 func PeriodPulling() {
     //周期性更新每个现有service的配置
     for {
-        time.Sleep(time.Second * 50)
+        time.Sleep(time.Second * 100)
         serviceKeys := ConfController.GetAllServiceKeys()
         log.Printf("try to re-pull %d configures\n", len(serviceKeys))
         for serviceKey := range serviceKeys {
