@@ -1,6 +1,6 @@
 ## Sona
 
-Sona是一个go语言实现的高效、实时、高可用的linux分布式配置中心，支持（C/C++/Go/Java/Python）主流编程语言接口
+Sona是一个go语言实现的高效、实时、高可用的linux分布式配置中心，轻量级支持（Golang/C++/Java/Python）主流编程语言接口
 
 ```
     ___  ___  _ __   __ _ 
