@@ -53,7 +53,20 @@ if api != NULL {
 ```
 **Java：**
 ```
-???
+SonaApi api = null;
+try {
+    api = new SonaApi("lebron.james.info");
+} catch (Exception e) {
+}
+
+if (api != null) {
+    String value = api.Get("player", "number");
+    System.out.println(value);
+    ArrayList<String> list = api.GetList("friends", "list");
+    for (String item: list) {
+        System.out.println(item);
+    }
+}
 ```
 
 
