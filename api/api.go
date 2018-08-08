@@ -50,7 +50,7 @@ func GetApi(serviceKey string) (*SonaApi, error) {
 func (api *SonaApi) keepUsing() {
     req := &protocol.KeepUsingReq{ServiceKey:proto.String(api.serviceKey)}
     for {
-        time.Sleep(time.Second * 10)
+        time.Sleep(time.Second * 60)
         //tell agent
         api.udpClient.Send(protocol.KeepUsingReqId, req)
     }
