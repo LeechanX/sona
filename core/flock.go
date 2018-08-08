@@ -69,7 +69,7 @@ func (rl *RdFlock) Close() {
 
 //可以上共享锁
 func (wl *WrFlock) RDLock() error {
-    wl.flock.Type = syscall.F_WRLCK
+    wl.flock.Type = syscall.F_RDLCK
     return syscall.FcntlFlock(wl.file.Fd(), syscall.F_SETLKW, &(wl.flock))
 }
 
