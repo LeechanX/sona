@@ -24,7 +24,7 @@ sona配置中心采用了经典一中心(broker)多agent的分布式架构，基
 
 ## USAGE
 
-提供C/C++/Java/Python/Golang多语言支持
+提供C/C++/Java/Python/Golang多语言支持，基于protobuf-2.6.1
 
 **go语言：**
 
@@ -71,6 +71,20 @@ if (api != null) {
 }
 ```
 
+**Python：** python2.7、python3.6兼容的代码（如果要使用python3，请重新编译protocol/base_protocol.proto并将产生的base_protocol_pb2.py替换到api/python/sona目录下）
+```
+from sona import api
+
+try:
+    api = api.SonaApi("lebron.xx.info")
+except Exception as e:
+    api = None
+    print(e)
+    
+if api:
+    print(api.get("player", "team")) #获取player.number值 (string)
+    print(api.get_list("friends", "list")) #获取friends.list值列表 (List<string>)
+```
 
 
 ## 原理介绍
