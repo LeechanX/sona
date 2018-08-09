@@ -3,3 +3,5 @@
 *.pb.go
 *.class
 *.pyc
+*.a
+*.o
