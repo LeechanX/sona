@@ -8,6 +8,9 @@ all:
 	mv sona_agent bin/
 	mv sona_broker bin/
 	mv sona_cli bin/
+	go build admin/sona_web_server.go
+	mv sona_web_server admin/
 clean:
 	rm -rf bin/
+	rm -f admin/sona_web_server
 	rm -f protocol/*.pb.go

@@ -11,16 +11,16 @@
 <body>
 
     <div class="container">
-        <h3>{{.Service}} <small>Version: {{.Version}}</small></h3>
+        <h3>{{.ServiceKey}} <small>Version: {{.Version}}</small></h3>
         <p class="text-danger">Submit才会最终执行操作, 故操作完成后请点击Submit</p>
         <br>
     <form id="edit_form" class="form-horizontal" action="/run/update" method="post" onsubmit="return option_all()">
         <select multiple class="form-control" id="conf_data_id" name="confs">
-            {{range $key, $value := .Conf}}
+            {{range $key, $value := .Confs}}
             <option value="{{$key}} = {{$value}}">{{$key}} = {{$value}}</option>
             {{end}}
         </select>
-        <input type="hidden" name="serviceKey" value="{{.Service}}">
+        <input type="hidden" name="servicekey" value="{{.ServiceKey}}">
         <input type="hidden" name="version" value="{{.Version}}">
         <br>
         <label for="exampleInputName2">Target Key</label>
