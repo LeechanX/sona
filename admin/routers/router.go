@@ -1,7 +1,7 @@
 package routers
 
 import (
-	"sona/admin/SonaManageSystem/controllers"
+	"sona/admin/controllers"
 	"github.com/astaxie/beego"
 )
 
