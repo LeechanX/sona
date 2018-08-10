@@ -3,12 +3,11 @@ package main
 import (
 	_ "sona/admin/routers"
 	"github.com/astaxie/beego"
-	"fmt"
+	"sona/common"
 )
 
 func main() {
-	appname := beego.AppConfig.String("appname")
-	fmt.Println(appname)
+	common.PrintLogo()
 	beego.Run()
 }
 
