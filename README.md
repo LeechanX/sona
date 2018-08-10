@@ -117,11 +117,28 @@ broker介绍 [broker readme][3]
 
 安装流程：
 
-- 将本项目git clone到您的`$GOPATH`下
-- 进入`$GOPATH/sona`目录下
-- 执行`make`进行编译，所有可执行文件sona_agent、sona_broker将产生在`bin`目录下
-- 编辑broker配置文件（示例在`broker/conf/`目录下），后执行`bin/sona_broker -c 配置文件路径`启动broker
-- 编辑agent配置文件（示例在`agent/conf/`目录下），后执行`bin/sona_agent -c 配置文件路径`启动agent
-- 在admin目录下执行`./sona_web_server`，运行配置的web管理端
-- 所有语言的api位于`api`目录下，自行使用即可
+1、将本项目git clone到您的`$GOPATH`下
+
+2、进入`$GOPATH/sona`目录下
+
+3、执行`make`进行编译，所有可执行文件sona_agent、sona_broker将产生在`bin`目录下
+
+4、编辑broker配置文件（示例在`broker/conf/`目录下），后执行`bin/sona_broker -c 配置文件路径`启动broker
+
+5、编辑agent配置文件（示例在`agent/conf/`目录下），后执行`bin/sona_agent -c 配置文件路径`启动agent
+
+6、编辑web server配置文件（`admin/conf/app.conf`），在admin目录下执行`./sona_web_server`，运行配置的web管理端
+
+本人不擅长web编程，所以页面有点丑......
+
+访问127.0.0.1:8080端口，结果为service配置查询入口
+![arch](tutorial/pictures/index.png)
+
+新增service key的界面
+![arch](tutorial/pictures/add.png)
+
+编辑某service配置的界面
+![arch](tutorial/pictures/edit.png)
+
+7、所有语言的api位于`api`目录下，自行使用即可
 
