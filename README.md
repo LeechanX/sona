@@ -132,13 +132,13 @@ broker介绍 [broker readme][3]
 本人不擅长web编程，所以页面有点丑......
 
 访问127.0.0.1:8080端口，结果为service配置查询入口
-![arch](tutorial/pictures/index.png)
+![index](tutorial/pictures/index.jpg)
 
 新增service key的界面
-![arch](tutorial/pictures/add.png)
+![add](tutorial/pictures/add.jpg)
 
 编辑某service配置的界面
-![arch](tutorial/pictures/edit.png)
+![edit](tutorial/pictures/do.jpg)
 
 7、所有语言的api位于`api`目录下，自行使用即可
 
