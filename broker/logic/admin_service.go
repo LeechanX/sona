@@ -70,6 +70,8 @@ func AddConfig(serviceKey string, confKeys []string, values []string) error {
         //遇到了非"不存在"的错误
         return err
     }
+    //回写缓存
+    CacheLayer.WriteBack(serviceKey, 1, confKeys, values)
 
     //新增的service版本号为1
     //则调用mongo更新接口
@@ -93,8 +95,6 @@ func AddConfig(serviceKey string, confKeys []string, values []string) error {
     for _, agent := range agents {
         agent.SendData(protocol.PushServiceConfigReqId, &pushReq)
     }
-    //回写缓存
-    CacheLayer.WriteBack(serviceKey, 1, confKeys, values)
     return nil
 }
 
@@ -128,6 +128,8 @@ func UpdateConfig(serviceKey string, version uint, confKeys []string, values []s
     if err != nil {
         return err
     }
+    //回写缓存
+    CacheLayer.WriteBack(serviceKey, newVersion, confKeys, values)
 
     //如果有agent订阅, push给每个agent连接
     agents := BrokerServer.SubscribeBook.GetSubscribers(serviceKey)
@@ -146,8 +148,6 @@ func UpdateConfig(serviceKey string, version uint, confKeys []string, values []s
     for _, agent := range agents {
         agent.SendData(protocol.PushServiceConfigReqId, &pushReq)
     }
-    //回写缓存
-    CacheLayer.WriteBack(serviceKey, newVersion, confKeys, values)
     return nil
 }
 
@@ -210,7 +210,7 @@ func updateConfigHandler(session *tcp.Session, pb proto.Message) {
     log.Println("debug: into update config callback")
     req := pb.(*protocol.AdminUpdConfigReq)
     rsp := protocol.AdminExecuteRsp{}
-
+    log.Printf("DEBUG: new conf length %d\n", len(req.ConfKeys))
     err := UpdateConfig(*req.ServiceKey, uint(*req.Version), req.ConfKeys, req.Values)
     if err != nil {
         rsp.Code = proto.Int32(-1)
