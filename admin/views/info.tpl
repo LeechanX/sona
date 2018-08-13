@@ -17,7 +17,7 @@
     <form id="edit_form" class="form-horizontal" action="/run/update" method="post" onsubmit="return option_all()">
         <select multiple class="form-control" id="conf_data_id" name="confs">
             {{range $key, $value := .Confs}}
-            <option value="{{$key}} = {{$value}}">{{$key}} = {{$value}}</option>
+            <option disabled="disabled" value="{{$key}} = {{$value}}">{{$key}} = {{$value}}</option>
             {{end}}
         </select>
         <input type="hidden" name="servicekey" value="{{.ServiceKey}}">
@@ -56,8 +56,10 @@
     <script type="text/javascript">
         function option_all() {
             $('#conf_data_id option').each(function () {
-                $(this).attr('selected', true);
+                $(this).attr('selected', true); 
             });
+            //var values = $("#conf_data_id>option").map(function() { return $(this).val(); });
+            //$('#conf_data_id').val(values)
         }
         $('#update_btn_id').click(function() {
             var key = $('#target_key_id').val().trim()
@@ -107,7 +109,7 @@
             })
 
             var optionValue = key + " = " + value
-            $("#conf_data_id").append("<option value='"+ optionValue +"'>" + optionValue + "</option>")
+            $("#conf_data_id").append("<option disabled=\"disabled\" value='"+ optionValue +"'>" + optionValue + "</option>")
 
             var log = $("#operation_log").html();
             var result = "added"
@@ -118,18 +120,28 @@
 
         });
         $('#delete_btn_id').click(function(){
-            var selectValue = $("#conf_data_id").val();
-            if (selectValue == null) {
-                alert("please select a configure item")
-                return;
+            var key = $('#target_key_id').val().trim();
+            if (key == "") {
+                alert("configureKey is empty")
+                return
             }
-            for (var i = 0;i < selectValue.length;i++) {
-                var key = selectValue[i].split(' = ')[0];
+            var exist = false
+            $("#conf_data_id option").each(function() {
+                var originVal = $(this).val();
+                if (originVal.split(" = ")[0] == key) {
+                    exist = true
+                    //delete it
+                    $(this).remove()
+                    return false;
+                }
+            })
+
+            if (exist == false) {
+                alert("no such key")
+            } else {
                 var log = $("#operation_log").html();
                 $("#operation_log").html(log + "<p class=\"text-warning\">" + key + " is deleted" + "</p>")
             }
-            
-            $("select[id=conf_data_id] option:selected").remove();
         });
         $('#clear_btn_id').click(function(){
             $("#conf_data_id").empty(); 
